@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avendus Capital - Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            margin: 0 0 0.5rem 0;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            margin: 0 0 2rem 0;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #475569;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.85rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #2563eb;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <div class="login-header">
+            <div
+                style="width: 48px; height: 48px; background: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                <i data-lucide="shield-check" color="white" size="28"></i>
+            </div>
+            <h2>Admin Portal</h2>
+            <p>Please sign in to continue</p>
+        </div>
+
+        <form id="adminLoginForm" onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label>Username</label>
+                <div class="input-wrapper">
+                    <i data-lucide="user" class="input-icon" size="18"></i>
+                    <input type="text" id="username" class="input-field" placeholder="Enter admin username" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <div class="input-wrapper">
+                    <i data-lucide="lock" class="input-icon" size="18"></i>
+                    <input type="password" id="password" class="input-field" placeholder="Enter password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn">Sign In</button>
+            <div id="errorMsg" class="error-msg">Invalid credentials. Please try again.</div>
+        </form>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const err = document.getElementById('errorMsg');
+            const btn = document.querySelector('.login-btn');
+
+            err.style.display = 'none';
+            btn.textContent = 'Authenticating...';
+            btn.disabled = true;
+
+            try {
+                const client = window.DB.getClient();
+                let admin = null;
+
+                if (client) {
+                    try {
+                        // 1. Try to login with database credentials
+                        const { data, error } = await client
+                            .from('admins')
+                            .select('*')
+                            .eq('username', user)
+                            .eq('password', pass)
+                            .single();
+
+                        if (data && !error) {
+                            admin = data;
+                        } else {
+                            // 2. If login failed, check if any admin exists in the table
+                            // (We only fall back to admin123 if the table is empty or missing)
+                            const { count, error: countErr } = await client
+                                .from('admins')
+                                .select('*', { count: 'exact', head: true });
+
+                            // If table exists and has entries, then we shouldn't fallback to admin123
+                            const hasAdmins = !countErr && count > 0;
+
+                            if (!hasAdmins && user === 'admin' && pass === 'admin123') {
+                                admin = { id: 1, username: 'admin' };
+                            }
+                        }
+                    } catch (dbErr) {
+                        console.error("DB check failed:", dbErr);
+                        // Fallback if DB is unreachable
+                        if (user === 'admin' && pass === 'admin123') {
+                            admin = { id: 1, username: 'admin' };
+                        }
+                    }
+                } else {
+                    // Fallback for primary admin if client is not initialized
+                    if (user === 'admin' && pass === 'admin123') {
+                        admin = { id: 1, username: 'admin' };
+                    }
+                }
+
+                if (!admin) {
+                    throw new Error("Invalid credentials");
+                }
+
+                // Store full admin object
+                sessionStorage.setItem('admin_auth', JSON.stringify(admin));
+
+                // Immediate redirect
+                window.location.href = 'admin_customer_management.html';
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                err.style.display = 'block';
+                btn.textContent = 'Sign In';
+                btn.disabled = false;
+
+                // Shake effect
+                const card = document.querySelector('.login-card');
+                card.style.transform = 'translateX(5px)';
+                setTimeout(() => card.style.transform = 'translateX(-5px)', 100);
+                setTimeout(() => card.style.transform = 'translateX(5px)', 200);
+                setTimeout(() => card.style.transform = 'translateX(0)', 300);
+            }
+        }
+    </script>
+</body>
+
+</html>
