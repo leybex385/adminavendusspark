@@ -127,6 +127,48 @@ window.DB = {
         return { success: true, authId: data?.user?.id };
     },
 
+    // --- MOBILE OTP (Real Supabase Auth) ---
+    async sendMobileOtp(mobile) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database connecting...' };
+
+        // Format mobile number: Ensure it has + prefix. Assuming input is strict or handling it here.
+        // User input often excludes +91 if hardcoded in UI. 
+        // We'll rely on the UI passing the full number with country code OR prepend it if needed.
+        // For now, assume UI passes full number with +, or we handle it in UI.
+
+        console.log("Supabase sendMobileOtp for:", mobile);
+        const { error } = await client.auth.signInWithOtp({
+            phone: mobile
+        });
+
+        if (error) {
+            console.error("Supabase OTP Send Error:", error);
+            return { success: false, message: error.message };
+        }
+
+        return { success: true };
+    },
+
+    async verifyMobileOtp(mobile, token) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database connecting...' };
+
+        console.log("Supabase verifyMobileOtp for:", mobile);
+        const { data, error } = await client.auth.verifyOtp({
+            phone: mobile,
+            token: token,
+            type: 'sms'
+        });
+
+        if (error) {
+            console.error("Supabase OTP Verify Error:", error);
+            return { success: false, message: error.message };
+        }
+
+        return { success: true, authId: data?.user?.id };
+    },
+
     async resetPassword(mobile, newPassword) {
         const client = this.getClient();
         const { data, error } = await client
@@ -417,31 +459,118 @@ window.DB = {
     },
 
     // --- KYC ---
-    async submitKYC(userId, kycData) {
+    async uploadKycImage(file, userId) {
         const client = this.getClient();
+        if (!client) return { error: 'No client' };
 
-        // Check if user already has a KYC submission
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // 1. Upload
+        const { data, error } = await client.storage
+            .from('kyc-documents')
+            .upload(fileName, file);
+
+        if (error) {
+            console.error("Upload Error:", error);
+            return { error: error };
+        }
+
+        // 2. Get Public URL
+        const { data: publicUrlData } = client.storage
+            .from('kyc-documents')
+            .getPublicUrl(fileName);
+
+        return { publicUrl: publicUrlData.publicUrl };
+    },
+
+    async submitKYC(userId, fullName, mobile, idNumber, idFront, idBack, selfie, extra = {}) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database connecting...' };
+
+        // 1. Process files (upload if they are File objects)
+        const uploads = [
+            { file: idFront, key: 'id_front_url' },
+            { file: idBack, key: 'id_back_url' },
+            { file: selfie, key: 'selfie_url' }
+        ];
+
+        const urls = {};
+        for (const up of uploads) {
+            if (up.file) {
+                if (typeof up.file === 'string' && up.file.startsWith('http')) {
+                    urls[up.key] = up.file;
+                } else if (up.file instanceof File || (typeof up.file === 'object' && up.file.name)) {
+                    const res = await this.uploadKycImage(up.file, userId);
+                    if (res.error) {
+                        console.error(`KYC PIPELINE: Upload Failed for ${up.key}:`, res.error);
+                        return { success: false, error: res.error, stage: `upload_${up.key}` };
+                    }
+                    if (res.publicUrl) urls[up.key] = res.publicUrl;
+                }
+            }
+        }
+
+        // 2. Prepare User Profile Update (Authoritative Profile Data)
+        // Note: The users table uses 'kyc' for the status, not 'status'.
+        const userPayload = {
+            full_name: fullName,
+            id_number: idNumber,
+            dob: extra.dob,
+            email: extra.email,
+            auth_id: extra.auth_id,
+            username: extra.username
+            // Note: We skip 'mobile' because it's the unique ID and already set.
+        };
+
+        // Remove any undefined fields
+        Object.keys(userPayload).forEach(key => userPayload[key] === undefined && delete userPayload[key]);
+
+        const userUpdateRes = await this.updateUser(userId, userPayload);
+        if (!userUpdateRes.success) {
+            console.error("KYC PIPELINE: Profile Update Failed:", userUpdateRes.error);
+            return { success: false, error: userUpdateRes.error, stage: 'profile_update' };
+        }
+
+        // 3. Prepare KYC Submission Record
+        const kycPayload = {
+            user_id: userId,
+            id_type: extra.id_type || 'Aadhar',
+            id_front_url: urls.id_front_url,
+            id_back_url: urls.id_back_url,
+            selfie_url: urls.selfie_url || null,
+            status: 'Pending',
+            submitted_at: new Date().toISOString()
+        };
+
+        // Remove any undefined fields
+        Object.keys(kycPayload).forEach(key => kycPayload[key] === undefined && delete kycPayload[key]);
+
         const { data: existing } = await client
             .from('kyc_submissions')
             .select('id')
             .eq('user_id', userId)
             .limit(1);
 
-        let result;
+        let res;
         if (existing && existing.length > 0) {
-            // Update existing record
-            result = await client
+            res = await client
                 .from('kyc_submissions')
-                .update(kycData)
+                .update(kycPayload)
                 .eq('user_id', userId);
         } else {
-            // Insert new record
-            result = await client
+            res = await client
                 .from('kyc_submissions')
-                .insert([{ user_id: userId, ...kycData }]);
+                .insert([kycPayload]);
         }
 
-        return { success: !result.error, error: result.error };
+        return {
+            success: !res.error,
+            error: res.error,
+            profileUpdate: userUpdateRes,
+            kycInsert: res,
+            stage: 'kyc_submission'
+        };
     },
 
     async getKycByUserId(userId) {
@@ -666,8 +795,20 @@ window.DB = {
             query = query.eq('id', id);
         }
 
-        const { data, error } = await query;
-        return { success: !error, error };
+        // Force selection with count to detect RLS blocks or missing rows
+        const res = await query.select('*', { count: 'exact' });
+
+        if (res.error) {
+            console.error("Update error:", res.error);
+            return { success: false, error: res.error };
+        }
+
+        if (res.count === 0) {
+            console.error("No rows updated. RLS likely blocking or ID wrong. ID used:", id);
+            return { success: false, error: "No rows updated", count: 0 };
+        }
+
+        return { success: true, data: res.data, count: res.count };
     },
 
     async updateKycStatus(id, status) {
