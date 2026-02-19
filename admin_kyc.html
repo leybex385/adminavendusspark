@@ -1368,7 +1368,13 @@
                                         Verify mobile phone number</th>
                                     <th
                                         style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                        Email</th>
+                                    <th
+                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
                                         Full name</th>
+                                    <th
+                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                        Date of Birth</th>
                                     <th
                                         style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
                                         ID number</th>
@@ -1808,9 +1814,13 @@
                         <label>phone number <span style="color:#ef4444">*</span></label>
                         <input type="text" id="ek_phone" class="kyc-input" placeholder="Enter phone">
                     </div>
-                    <div class="kyc-form-group" style="display: none;">
+                    <div class="kyc-form-group">
+                        <label>Email <span style="color:#ef4444">*</span></label>
+                        <input type="text" id="ek_email" class="kyc-input" placeholder="Enter email">
+                    </div>
+                    <div class="kyc-form-group">
                         <label>Date of birth <span style="color:#ef4444">*</span></label>
-                        <input type="date" id="ek_dob" class="kyc-input">
+                        <input type="text" id="ek_dob" class="kyc-input" placeholder="Enter DOB (YYYY-MM-DD)">
                     </div>
                 </div>
 
@@ -2039,6 +2049,11 @@
                 const allU = userRes.data || [];
                 const pendingTradesCount = tradeRes.data?.length || 0;
 
+                const pendingKycCount = allU.filter(u => {
+                    const sub = (u.kyc_submissions && u.kyc_submissions.length > 0) ? u.kyc_submissions[0] : null;
+                    return sub && sub.status === 'Pending';
+                }).length;
+
                 // Render Dashboard Stats Immediately
                 document.getElementById('stat_summary').innerHTML = `
                     <div class="section-card" style="background:#f0f9ff; margin:0; flex:1;">
@@ -2047,7 +2062,7 @@
                     </div>
                     <div class="section-card" style="background:#f0fdf4; margin:0; flex:1;">
                         <div style="font-size:0.75rem;">PENDING KYC</div>
-                        <h2 style="margin:5px 0 0 0;">${allU.filter(x => x.kyc === 'Pending').length}</h2>
+                        <h2 style="margin:5px 0 0 0;">${pendingKycCount}</h2>
                     </div>
                     <div class="section-card" style="background:#fff7ed; margin:0; flex:1;">
                         <div style="font-size:0.75rem;">PENDING TRADES</div>
@@ -2058,10 +2073,23 @@
                 // 2. PROGRESSIVE LOADING: Fetch the heavy lists individually or in smaller batches
                 // Use a smaller limit to prevent 10-minute hang. 200 is plenty for an admin overview.
 
-                // Load Users (Full details for list)
-                fetchSafe('users', '*', 500).then(data => {
-                    allUsers = data;
-                    document.getElementById('userList').innerHTML = data.length ? data.map(x => `
+                // Load Users (Full details for list) with JOINED LATEST KYC record
+                client.from('users')
+                    .select('*, kyc_submissions(*)')
+                    .order('created_at', { ascending: false })
+                    .order('submitted_at', { foreignTable: 'kyc_submissions', ascending: false })
+                    .limit(500)
+                    .then(({ data }) => {
+                        allUsers = data || [];
+                        // Ensure each user has only the latest sub in their array if multiple exist (extra safety)
+                        allUsers.forEach(u => {
+                            if (u.kyc_submissions && u.kyc_submissions.length > 1) {
+                                u.kyc_submissions.sort((a, b) => new Date(b.submitted_at || b.created_at) - new Date(a.submitted_at || a.created_at));
+                                u.kyc_submissions = [u.kyc_submissions[0]];
+                            }
+                        });
+                        // Update userList table
+                        document.getElementById('userList').innerHTML = allUsers.length ? allUsers.map(x => `
                         <tr>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${x.mobile || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${x.username || '-'}</td>
@@ -2077,8 +2105,11 @@
                             </td>
                         </tr>
                     `).join('') : '<tr><td colspan="7" style="text-align:center; padding:20px;">No users found</td></tr>';
-                    lucide.createIcons();
-                });
+                        lucide.createIcons();
+
+                        // Also render the KYC list using the same data
+                        renderKycList();
+                    });
 
                 // Load Withdrawals/Deposits
                 fetchSafe('withdrawals', '*, users(id,mobile,username)', 100).then(data => {
@@ -2213,12 +2244,6 @@
                     lucide.createIcons();
                 });
 
-                // Load KYC Submissions
-                fetchSafe('kyc_submissions', '*', 100).then(data => {
-                    allSubmissions = data;
-                    renderKycList();
-                });
-
                 // Background Listener for Chat (Initialize early)
                 initLiveChat();
 
@@ -2293,42 +2318,48 @@
             const fu = document.getElementById('kf_user')?.value.toLowerCase();
             const fn = document.getElementById('kf_name')?.value.toLowerCase();
             const fp = document.getElementById('kf_phone')?.value.toLowerCase();
-            const fs = document.getElementById('kf_sales')?.value.toLowerCase();
 
             let data = allUsers.filter(u => {
-                const sub = allSubmissions.find(s => s.user_id === u.id);
                 // Status Filter
+                const sub = (u.kyc_submissions && u.kyc_submissions.length > 0) ? u.kyc_submissions[0] : null;
+                const effectiveStatus = sub ? sub.status : 'NotSubmitted';
+
                 if (kycStatusFilter !== 'all') {
                     if (kycStatusFilter === 'NotSubmitted' && sub) return false;
-                    if (kycStatusFilter !== 'NotSubmitted' && u.kyc !== kycStatusFilter) return false;
+                    if (kycStatusFilter !== 'NotSubmitted' && effectiveStatus !== kycStatusFilter) return false;
                 }
                 // String Search Filters
                 if (fu && !(u.username || '').toLowerCase().includes(fu)) return false;
                 if (fn && !(u.full_name || '').toLowerCase().includes(fn)) return false;
                 if (fp && !u.mobile.toLowerCase().includes(fp)) return false;
-                // salesperson check stubbed as salesperson field not in current user schema
                 return true;
             });
 
             list.innerHTML = data.map(x => {
-                const sub = allSubmissions.find(s => s.user_id === x.id);
-                const statusClass = x.kyc === 'Approved' ? 'approved' : (x.kyc === 'Rejected' ? 'reject' : 'pending');
-                const statusText = x.kyc === 'Pending' ? '待审核' : x.kyc;
+                const sub = (x.kyc_submissions && x.kyc_submissions.length > 0) ? x.kyc_submissions[0] : null;
+
+                // Status logic: Prefer sub.status, fallback to 'Not Submitted'
+                const effectiveStatus = sub ? sub.status : 'NotSubmitted';
+                const statusClass = effectiveStatus === 'Approved' ? 'approved' : (effectiveStatus === 'Rejected' ? 'reject' : (effectiveStatus === 'Pending' ? 'pending' : 'not-submitted'));
+                const statusText = effectiveStatus === 'Pending' ? '待审核' : (effectiveStatus === 'NotSubmitted' ? 'Not Submitted' : effectiveStatus);
+
                 return `
                         <tr>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.username || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;"><span class="kyc-badge ${statusClass}">${statusText}</span></td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.mobile || '-'}</td>
+                            <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.email || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.full_name || '-'}</td>
+                            <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.dob || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.id_number || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
-                                ${sub?.id_front_url ? `<img src="${sub.id_front_url}" class="kyc-table-img" onclick="openKycEdit('${x.id}')">` : `<div class="kyc-table-img" style="display:flex;align-items:center;justify-content:center;"><i data-lucide="image" size="14"></i></div>`}
+                                ${sub?.id_front_url ? `<img src="${sub.id_front_url}" class="kyc-table-img" onclick="openKycEdit('${x.id}')">` : `<div class="kyc-table-img" style="display:flex;align-items:center;justify-content:center; opacity:0.3;"><i data-lucide="image" size="14"></i></div>`}
                             </td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
-                                ${sub?.id_back_url ? `<img src="${sub.id_back_url}" class="kyc-table-img" onclick="openKycEdit('${x.id}')">` : `<div class="kyc-table-img" style="display:flex;align-items:center;justify-content:center;"><i data-lucide="image" size="14"></i></div>`}
+                                ${sub?.id_back_url ? `<img src="${sub.id_back_url}" class="kyc-table-img" onclick="openKycEdit('${x.id}')">` : `<div class="kyc-table-img" style="display:flex;align-items:center;justify-content:center; opacity:0.3;"><i data-lucide="image" size="14"></i></div>`}
                             </td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">-</td>
-                            <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${new Date(x.created_at).toLocaleString()}</td>
+                            <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${sub?.submitted_at ? new Date(sub.submitted_at).toLocaleString() : '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">-</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                 <div class="btn-edit-wrap">
@@ -2714,13 +2745,13 @@
             if (user) {
                 document.getElementById('ek_name').value = user.username || '';
                 document.getElementById('ek_fullname').value = user.full_name || '';
-                document.getElementById('ek_idnum').value = user.id_number || 'No ID set';
+                document.getElementById('ek_idnum').value = user.id_number || '';
                 document.getElementById('ek_phone').value = user.mobile || '';
-                document.getElementById('ek_status').value = user.kyc || 'Pending';
+                document.getElementById('ek_email').value = user.email || '';
+                document.getElementById('ek_dob').value = user.dob || '';
+                document.getElementById('ek_status').value = kyc ? kyc.status : 'Pending';
                 document.getElementById('ek_pin').value = user.withdrawal_pin || '';
-                // Note: dob/address might need schema check, using defaults for now
-                document.getElementById('ek_dob').value = '';
-                document.getElementById('ek_notes').value = '';
+                document.getElementById('ek_notes').value = kyc ? (kyc.rejection_reason || '') : '';
             }
 
             if (kyc) {
@@ -2772,6 +2803,8 @@
                         full_name: document.getElementById('ek_fullname').value,
                         id_number: document.getElementById('ek_idnum').value,
                         mobile: document.getElementById('ek_phone').value,
+                        email: document.getElementById('ek_email').value,
+                        dob: document.getElementById('ek_dob').value,
                         kyc: document.getElementById('ek_status').value,
                         withdrawal_pin: document.getElementById('ek_pin').value
                     };
