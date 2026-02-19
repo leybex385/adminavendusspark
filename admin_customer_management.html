@@ -1877,7 +1877,13 @@
                                         Verify mobile phone number</th>
                                     <th
                                         style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                        Email</th>
+                                    <th
+                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
                                         Full name</th>
+                                    <th
+                                        style="padding:10px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                        Date of birth</th>
                                     <th
                                         style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
                                         ID number</th>
@@ -2270,7 +2276,11 @@
                         <label>phone number <span style="color:#ef4444">*</span></label>
                         <input type="text" id="ek_phone" class="kyc-input" placeholder="Enter phone">
                     </div>
-                    <div class="kyc-form-group" style="display: none;">
+                    <div class="kyc-form-group">
+                        <label>Email</label>
+                        <input type="email" id="ek_email" class="kyc-input" placeholder="Enter email">
+                    </div>
+                    <div class="kyc-form-group">
                         <label>Date of birth <span style="color:#ef4444">*</span></label>
                         <input type="date" id="ek_dob" class="kyc-input">
                     </div>
@@ -2754,7 +2764,7 @@
             };
 
             const [u, ks, w, d, tStock, tOtc, tIpo, l, m, ipo_legacy, stocks_legacy] = await Promise.all([
-                fetchSafe('users', client.from('users').select('id,mobile,username,full_name,id_number,balance,vip,credit_score,withdrawal_pin,created_at,kyc').or('is_deleted.is.null,is_deleted.eq.false').order('created_at', { ascending: false }).limit(500)),
+                fetchSafe('users', client.from('users').select('id,mobile,email,dob,username,full_name,id_number,balance,vip,credit_score,withdrawal_pin,created_at,kyc').or('is_deleted.is.null,is_deleted.eq.false').order('created_at', { ascending: false }).limit(500)),
                 fetchSafe('kyc_submissions', client.from('kyc_submissions').select('id,user_id,id_front_url,id_back_url,status')),
                 fetchSafe('withdrawals', client.from('withdrawals').select('*').order('created_at', { ascending: false }).limit(100)),
                 fetchSafe('deposits', client.from('deposits').select('*').order('created_at', { ascending: false }).limit(100)),
@@ -3408,7 +3418,9 @@
                 <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.username || '-'}</td>
                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;"><span class="kyc-badge ${statusClass}">${statusText}</span></td>
                 <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.mobile}</td>
+                <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.email || '-'}</td>
                 <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.full_name || '-'}</td>
+                <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.dob || '-'}</td>
                 <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.id_number || '-'}</td>
                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                     ${userKyc && userKyc.id_front_url
@@ -4048,10 +4060,10 @@
                 document.getElementById('ek_fullname').value = user.full_name || '';
                 document.getElementById('ek_idnum').value = user.id_number || 'No ID set';
                 document.getElementById('ek_phone').value = user.mobile || '';
+                document.getElementById('ek_email').value = user.email || '';
+                document.getElementById('ek_dob').value = user.dob || '';
                 document.getElementById('ek_status').value = user.kyc || 'Pending';
                 document.getElementById('ek_pin').value = user.withdrawal_pin || '';
-                // Note: dob/address might need schema check, using defaults for now
-                document.getElementById('ek_dob').value = '';
                 document.getElementById('ek_notes').value = '';
             }
 
@@ -4104,6 +4116,8 @@
                         full_name: document.getElementById('ek_fullname').value,
                         id_number: document.getElementById('ek_idnum').value,
                         mobile: document.getElementById('ek_phone').value,
+                        email: document.getElementById('ek_email').value,
+                        dob: document.getElementById('ek_dob').value,
                         kyc: document.getElementById('ek_status').value,
                         withdrawal_pin: document.getElementById('ek_pin').value
                     };
