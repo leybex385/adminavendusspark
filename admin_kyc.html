@@ -14,6 +14,8 @@
     <script>const supabasejs = window.supabase;</script>
     <script src="db.js"></script>
     <script src="db_patch.js"></script>
+    <script src="js/admin_auth_guard.js"></script>
+    <script src="js/admin_i18n.js"></script>
     <style>
         :root {
             --sidebar-bg: #ffffff;
@@ -112,6 +114,45 @@
             color: var(--primary-orange);
         }
 
+        /* Premium Language Switcher */
+        .lang-switcher {
+            display: flex;
+            gap: 8px;
+            margin-right: 15px;
+            align-items: center;
+        }
+
+        .lang-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: grayscale(1);
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .lang-btn:hover {
+            background: rgba(249, 115, 22, 0.1);
+            opacity: 0.9;
+            transform: scale(1.1);
+        }
+
+        .lang-btn.active {
+            filter: grayscale(0);
+            opacity: 1;
+            background: #ffffff;
+            border-color: #f97316;
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+            transform: scale(1.1);
+        }
+
         main {
             flex-grow: 1;
             display: flex;
@@ -170,6 +211,14 @@
             padding: 20px;
             min-height: 100%;
             box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .vsl-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 10px;
         }
 
         /* Unified Buttons */
@@ -1374,6 +1423,9 @@
                                         Full name</th>
                                     <th
                                         style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                        Gender</th>
+                                    <th
+                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
                                         Date of Birth</th>
                                     <th
                                         style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
@@ -1821,6 +1873,15 @@
                     <div class="kyc-form-group">
                         <label>Date of birth <span style="color:#ef4444">*</span></label>
                         <input type="text" id="ek_dob" class="kyc-input" placeholder="Enter DOB (YYYY-MM-DD)">
+                    </div>
+                    <div class="kyc-form-group">
+                        <label>Gender <span style="color:#ef4444">*</span></label>
+                        <select id="ek_gender" class="kyc-input">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                 </div>
 
@@ -2350,6 +2411,7 @@
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.mobile || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.email || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.full_name || '-'}</td>
+                            <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.gender || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.dob || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.id_number || '-'}</td>
                             <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
@@ -2749,6 +2811,7 @@
                 document.getElementById('ek_phone').value = user.mobile || '';
                 document.getElementById('ek_email').value = user.email || '';
                 document.getElementById('ek_dob').value = user.dob || '';
+                document.getElementById('ek_gender').value = user.gender || '';
                 document.getElementById('ek_status').value = kyc ? kyc.status : 'Pending';
                 document.getElementById('ek_pin').value = user.withdrawal_pin || '';
                 document.getElementById('ek_notes').value = kyc ? (kyc.rejection_reason || '') : '';
@@ -2805,6 +2868,7 @@
                         mobile: document.getElementById('ek_phone').value,
                         email: document.getElementById('ek_email').value,
                         dob: document.getElementById('ek_dob').value,
+                        gender: document.getElementById('ek_gender').value,
                         kyc: document.getElementById('ek_status').value,
                         withdrawal_pin: document.getElementById('ek_pin').value
                     };

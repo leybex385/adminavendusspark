@@ -54,10 +54,36 @@ window.DB = {
         }
 
         localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(data));
+
+        // --- AUTOMATIC CREDIT ALERT (Instruction 4) ---
+        if (data.credit_score < 90 && !sessionStorage.getItem('credit_alert_shown')) {
+            try {
+                // Check if already notified in this session to avoid duplicates
+                const { data: notices } = await client
+                    .from('messages')
+                    .select('id')
+                    .eq('user_id', data.id)
+                    .eq('sender', 'System')
+                    .ilike('message', '%credit score is below%')
+                    .limit(1);
+
+                if (!notices || notices.length === 0) {
+                    await this.sendNotice(data.id, "Credit Score Alert",
+                        JSON.stringify({
+                            title: "Credit Score Alert",
+                            message: "Your credit score is below the recommended level. Please maintain at least 90 credit points.",
+                            is_notification: true
+                        })
+                    );
+                }
+                sessionStorage.setItem('credit_alert_shown', 'true');
+            } catch (e) { console.error("Credit alert error:", e); }
+        }
+
         return { success: true, user: data };
     },
 
-    async register(mobile, password, email = null, authId = null) {
+    async register(mobile, password, email = null, authId = null, invitationCode = null) {
         const client = this.getClient();
         const insertData = {
             password,
@@ -69,6 +95,37 @@ window.DB = {
         if (mobile) insertData.mobile = mobile;
         if (email) insertData.email = email;
         if (authId) insertData.auth_id = authId;
+
+        // CSR Linkage Logic (STRICT ENFORCEMENT)
+        if (!invitationCode) {
+            return { success: false, message: "Invitation code is strictly required for registration." };
+        }
+
+        try {
+            console.log("DB: Validating invitation code:", invitationCode);
+            const { data: csr, error: csrError } = await client
+                .from('admins')
+                .select('id, status, role')
+                .eq('invitation_code', invitationCode)
+                .eq('role', 'csr')
+                .eq('status', 'active')
+                .maybeSingle();
+
+            if (csrError) throw csrError;
+
+            if (!csr) {
+                console.error("DB: Invalid or inactive invitation code:", invitationCode);
+                return { success: false, message: "Invalid or inactive invitation code." };
+            }
+
+            // Valid CSR found, link the user
+            insertData.csr_id = csr.id;
+            insertData.invitation_code = invitationCode; // Store the code used
+            console.log("DB: CSR validated and linked:", csr.id);
+        } catch (e) {
+            console.error("DB: Error during invitation validation:", e);
+            return { success: false, message: "System error during invitation validation." };
+        }
 
         const { data, error } = await client
             .from('users')
@@ -519,7 +576,8 @@ window.DB = {
             dob: extra.dob,
             email: extra.email,
             auth_id: extra.auth_id,
-            username: extra.username
+            username: extra.username,
+            gender: extra.gender
             // Note: We skip 'mobile' because it's the unique ID and already set.
         };
 
@@ -785,6 +843,22 @@ window.DB = {
 
     async updateUser(id, updateData) {
         const client = this.getClient();
+        // Detect CSR restriction for trading_frozen field (Instruction 1)
+        if (updateData.hasOwnProperty('trading_frozen')) {
+            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            if (auth.role === 'csr') {
+                const { data: target } = await client.from('users').select('csr_id').eq('id', id).single();
+                if (target && target.csr_id != auth.id) {
+                    return { success: false, error: "Unauthorized: Access denied to users of other CSRs." };
+                }
+            } else if (auth.role !== 'super_admin') {
+                // Only CSR and Super Admin can manage this if logged in as admin
+                if (sessionStorage.getItem('admin_auth')) {
+                    return { success: false, error: "Unauthorized action." };
+                }
+            }
+        }
+
         let query = client.from('users').update(updateData);
 
         // Safety: Detect if id is UUID (Supabase auth_id) or Numeric (internal id)
@@ -914,13 +988,17 @@ window.DB = {
     },
 
     // --- PRODUCT MANAGEMENT ---
-    async getProducts() {
+    async getProducts(createdBy = null) {
         const client = this.getClient();
         if (!client) return [];
-        const { data, error } = await client
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
+
+        let query = client.from('products').select('*');
+
+        if (createdBy) {
+            query = query.eq('created_by', createdBy);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
             console.error("Error fetching products:", error);

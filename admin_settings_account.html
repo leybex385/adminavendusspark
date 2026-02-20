@@ -14,6 +14,8 @@
     <script>const supabasejs = window.supabase;</script>
     <script src="db.js"></script>
     <script src="db_patch.js"></script>
+    <script src="js/admin_auth_guard.js"></script>
+    <script src="js/admin_i18n.js"></script>
     <style>
         :root {
             --sidebar-bg: #ffffff;
@@ -85,6 +87,45 @@
             background: #eff6ff;
             color: #3b82f6;
             font-weight: 600;
+        }
+
+        /* Premium Language Switcher */
+        .lang-switcher {
+            display: flex;
+            gap: 8px;
+            margin-right: 15px;
+            align-items: center;
+        }
+
+        .lang-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: grayscale(1);
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .lang-btn:hover {
+            background: rgba(249, 115, 22, 0.1);
+            opacity: 0.9;
+            transform: scale(1.1);
+        }
+
+        .lang-btn.active {
+            filter: grayscale(0);
+            opacity: 1;
+            background: #ffffff;
+            border-color: #f97316;
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+            transform: scale(1.1);
         }
 
         main {
@@ -314,18 +355,23 @@
             <div class="logo-box"></div> Avendus Capital
         </div>
         <nav class="nav-menu">
-            <a href="admin_customer_management.html" class="menu-item"><i data-lucide="home" size="18"></i> Front
-                Page</a>
-            <a href="admin_customer_management.html" class="menu-item"><i data-lucide="user-check" size="18"></i>
-                Real-name authentication</a>
-            <a href="admin_customer_management.html" class="menu-item"><i data-lucide="users" size="18"></i> Customer
-                Management</a>
-            <a href="admin_customer_management.html" class="menu-item"><i data-lucide="credit-card" size="18"></i> Bank
-                Accounts</a>
-            <a href="admin_customer_management.html" class="menu-item"><i data-lucide="box" size="18"></i> Product
-                Management</a>
-            <a href="admin_customer_management.html" class="menu-item"><i data-lucide="trending-up" size="18"></i>
-                Institutional Stock 057</a>
+            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_front_page"><i
+                    data-lucide="home" size="18"></i> 项目首页</a>
+            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_kyc"><i
+                    data-lucide="user-check" size="18"></i>
+                实名认证</a>
+            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_users"><i data-lucide="users"
+                    size="18"></i> 客户管理</a>
+            <a href="admin_customer_management.html" class="menu-item" id="btn_bank_accounts"
+                data-key="sidebar_bank_accounts"><i data-lucide="credit-card" size="18"></i> 银行账户</a>
+            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_products"><i data-lucide="box"
+                    size="18"></i> 产品管理</a>
+            <a href="admin_customer_management.html" class="menu-item" id="btn_stock057" data-key="sidebar_stock057"><i
+                    data-lucide="trending-up" size="18"></i>
+                机构股票057</a>
+            <a href="admin_settings_account.html" class="menu-item active" id="btn_account_settings"
+                data-key="sidebar_account_settings" style="display: none;"><i data-lucide="settings" size="18"></i>
+                账号设置</a>
 
             <style>
                 .admin-user-menu {
@@ -417,17 +463,25 @@
 
     <main>
         <header>
-            <div class="admin-user-menu" id="adminUserMenu">
-                <div class="admin-trigger" onclick="toggleAdminMenu()">
-                    <div class="admin-avatar">AD</div>
-                    <span class="dropdown-arrow">▼</span>
+            <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
+                <!-- Premium Language Switcher -->
+                <div class="lang-switcher">
+                    <button class="lang-btn" onclick="switchLang('cn')" data-lang="cn" title="中文">🇨🇳</button>
+                    <button class="lang-btn" onclick="switchLang('en')" data-lang="en" title="English">🇺🇸</button>
                 </div>
 
-                <div class="admin-dropdown" id="adminDropdown">
-                    <a href="admin_settings_account.html">Account Settings</a>
+                <div class="admin-user-menu" id="adminUserMenu">
+                    <div class="admin-trigger" onclick="toggleAdminMenu()">
+                        <div class="admin-avatar">AD</div>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
 
-                    <hr>
-                    <button id="dropdownLogoutBtn" onclick="adminLogout()">Logout</button>
+                    <div class="admin-dropdown" id="adminDropdown">
+                        <a href="admin_settings_account.html" data-key="header_settings">账号设置</a>
+
+                        <hr>
+                        <button id="dropdownLogoutBtn" onclick="adminLogout()" data-key="header_logout">退出登录</button>
+                    </div>
                 </div>
             </div>
 
@@ -455,32 +509,28 @@
 
         <div class="container">
             <div class="section-card">
-                <h2 class="form-group" style="margin-top:0">Account Settings</h2>
-
-
+                <h2 class="form-group" style="margin-top:0" data-key="title_settings">Account Settings</h2>
 
                 <!-- Change Password -->
-                <h3 class="form-label" style="font-size: 1rem;">Change Password</h3>
+                <h3 class="form-label" style="font-size: 1rem;" data-key="btn_update_password">Change Password</h3>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="form-label">Current Password</label>
+                        <label class="form-label" data-key="lbl_current_pass">Current Password</label>
                         <input type="password" id="currentPassword" class="vsl-input">
                     </div>
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="form-label">New Password</label>
+                        <label class="form-label" data-key="lbl_new_pass">New Password</label>
                         <input type="password" id="newPassword" class="vsl-input">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Confirm New Password</label>
+                        <label class="form-label" data-key="lbl_confirm_pass">Confirm New Password</label>
                         <input type="password" id="confirmPassword" class="vsl-input">
                     </div>
                 </div>
-                <button id="btnUpdatePassword" class="vsl-btn vsl-btn-primary">Update Password</button>
-
-
-
+                <button id="btnUpdatePassword" class="vsl-btn vsl-btn-primary" data-key="btn_update_password">Update
+                    Password</button>
             </div>
         </div>
     </main>
