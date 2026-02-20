@@ -1,4 +1,3 @@
-
 // Admin Settings Logic using Supabase built-in methods
 
 document.addEventListener('DOMContentLoaded', async () => {
