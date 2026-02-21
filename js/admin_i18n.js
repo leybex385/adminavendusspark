@@ -92,6 +92,18 @@
 
             // Search
             "search_placeholder": "搜索..."
+            // Login Roles
+"role_super_admin": "超级管理员",
+"role_csr": "客服专员",
+
+// Login Errors
+"err_invalid_credentials": "账号或密码错误，请重试",
+"err_wrong_password": "密码错误，请重新输入",
+"err_role_mismatch": "账号角色不匹配",
+"err_inactive": "该账号已被停用，请联系管理员",
+
+// Login Status
+"authenticating": "正在验证身份..."
         },
         en: {
             "sidebar_front_page": "Home",
@@ -172,7 +184,15 @@
             "ph_username": "Enter admin username",
             "ph_password": "Enter password",
             "auth_progress": "Authenticating...",
+"role_super_admin": "Super Admin",
+"role_csr": "CSR",
 
+"err_invalid_credentials": "Invalid username or password.",
+"err_wrong_password": "Incorrect password. Please try again.",
+"err_role_mismatch": "Account role mismatch.",
+"err_inactive": "This account is inactive. Please contact administrator.",
+
+"authenticating": "Authenticating..."
             "search_placeholder": "Search..."
         }
     };
@@ -253,3 +273,4 @@
         window.applyTranslations();
     }
 })();
+
