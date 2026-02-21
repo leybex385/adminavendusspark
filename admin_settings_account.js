@@ -1,3 +1,4 @@
+
 // Admin Settings Logic using Supabase built-in methods
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -65,18 +66,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newPass = document.getElementById('newPassword').value;
             const confirmPass = document.getElementById('confirmPassword').value;
 
-            if (!newPass || !confirmPass) return showAlert('warning', "Please fill in the new password fields.");
-            if (newPass !== confirmPass) return showAlert('warning', "Passwords do not match.");
-            if (newPass.length < 6) return showAlert('warning', "Password must be at least 6 characters.");
+            if (!newPass || !confirmPass) return showAlert('warning', window.i18n('err_fill_all_pass_fields', "Please fill in the new password fields."));
+            if (newPass !== confirmPass) return showAlert('warning', window.i18n('err_passwords_no_match', "Passwords do not match."));
+            if (newPass.length < 6) return showAlert('warning', window.i18n('err_password_6chars', "Password must be at least 6 characters."));
 
-            btnUpdatePass.textContent = 'Updating...';
+            btnUpdatePass.textContent = window.i18n('lbl_updating', 'Updating...');
             btnUpdatePass.disabled = true;
 
             try {
                 // Re-validate session
                 const adminAuthStr = sessionStorage.getItem('admin_auth');
                 if (!adminAuthStr) {
-                    showAlert('error', 'Admin session not found. Please login again.');
+                    showAlert('error', window.i18n('err_session_not_found', 'Admin session not found. Please login again.'));
                     window.location.href = 'admin_login.html';
                     return;
                 }
@@ -85,18 +86,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     adminData = JSON.parse(adminAuthStr);
                 } catch (e) {
-                    throw new Error("Invalid session format");
+                    throw new Error(window.i18n('err_invalid_session_format', "Invalid session format"));
                 }
 
                 if (!adminData || !adminData.id) {
-                    showAlert('error', 'Admin ID not found in session. Please login again.');
+                    showAlert('error', window.i18n('err_admin_id_not_found', 'Admin ID not found in session. Please login again.'));
                     window.location.href = 'admin_login.html';
                     return;
                 }
 
                 const adminId = parseInt(adminData.id);
                 if (isNaN(adminId)) {
-                    throw new Error("Invalid admin ID format in session");
+                    throw new Error(window.i18n('err_invalid_id_format', "Invalid admin ID format in session"));
                 }
 
                 // Update password in 'admins' table (NOT 'users' table)
@@ -107,12 +108,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (error) {
                     if (error.message.includes('Could not find the table')) {
-                        throw new Error("The 'admins' table is missing in your Supabase database. Please run the SQL patch in 'create_admins_table.sql' to create it.");
+                        throw new Error(window.i18n('err_table_missing', "The 'admins' table is missing in your Supabase database. Please run the SQL patch in 'create_admins_table.sql' to create it."));
                     }
                     throw error;
                 }
 
-                showAlert('success', "Password updated successfully.");
+                showAlert('success', window.i18n('msg_password_updated', "Password updated successfully."));
 
                 // Clear inputs
                 document.getElementById('currentPassword').value = '';
@@ -121,9 +122,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             } catch (e) {
                 console.error(e);
-                showAlert('error', "Error updating password: " + e.message);
+                showAlert('error', window.i18n('err_updating_password', "Error updating password: ") + e.message);
             } finally {
-                btnUpdatePass.textContent = 'Update Password';
+                btnUpdatePass.textContent = window.i18n('btn_update_password', 'Update Password');
                 btnUpdatePass.disabled = false;
             }
         });

@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS admins (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'super_admin' CHECK (role IN ('super_admin', 'csr')),
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -10,6 +12,6 @@ CREATE TABLE IF NOT EXISTS admins (
 ALTER TABLE admins DISABLE ROW LEVEL SECURITY;
 
 -- Insert default admin if it doesn't exist
-INSERT INTO admins (username, password) 
-VALUES ('admin', 'admin123')
+INSERT INTO admins (username, password, role, status) 
+VALUES ('admin', 'admin123', 'super_admin', 'active')
 ON CONFLICT (username) DO NOTHING;

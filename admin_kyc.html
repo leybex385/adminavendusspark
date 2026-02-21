@@ -1009,54 +1009,66 @@
             <div class="logo-box"></div> Avendus Capital
         </div>
         <nav class="nav-menu">
-            <div class="menu-item active" id="btn_home" onclick="switchPage('home')"><i data-lucide="home"
-                    size="18"></i> front page</div>
-            <div class="menu-item" id="btn_kyc" onclick="switchPage('kyc')"><i data-lucide="user-check" size="18"></i>
+            <div class="menu-item active" id="btn_home" onclick="switchPage('home')" data-i18n="sidebar_front_page"><i
+                    data-lucide="home" size="18"></i> front page</div>
+            <div class="menu-item" id="btn_kyc" onclick="switchPage('kyc')" data-i18n="sidebar_kyc"><i
+                    data-lucide="user-check" size="18"></i>
                 Real-name authentication</div>
-            <div class="menu-item" id="btn_users" onclick="switchPage('users')"><i data-lucide="users" size="18"></i>
+            <div class="menu-item" id="btn_users" onclick="switchPage('users')" data-i18n="sidebar_users"><i
+                    data-lucide="users" size="18"></i>
                 Customer Management</div>
-            <div class="menu-item" id="btn_bank_accounts" onclick="switchPage('bank_accounts')"><i
-                    data-lucide="credit-card" size="18"></i>
+            <div class="menu-item" id="btn_bank_accounts" onclick="switchPage('bank_accounts')"
+                data-i18n="sidebar_bank_accounts"><i data-lucide="credit-card" size="18"></i>
                 Bank Accounts</div>
-            <div class="menu-item" id="btn_products" onclick="switchPage('products')"><i data-lucide="box"
-                    size="18"></i> Product Management</div>
-            <div class="menu-item" id="btn_stock057" onclick="switchPage('stock057')"><i data-lucide="trending-up"
-                    size="18"></i> Institutional Stock 057</div>
-            <div class="menu-item" onclick="toggleSub('subFinancial')"><i data-lucide="wallet" size="18"></i> Financial
+            <div class="menu-item" id="btn_products" onclick="switchPage('products')" data-i18n="sidebar_products"><i
+                    data-lucide="box" size="18"></i> Product Management</div>
+            <div class="menu-item" id="btn_stock057" onclick="switchPage('stock057')" data-i18n="sidebar_stock057"><i
+                    data-lucide="trending-up" size="18"></i> Institutional Stock 057</div>
+            <div class="menu-item" onclick="toggleSub('subFinancial')" data-i18n="sidebar_financial"><i
+                    data-lucide="wallet" size="18"></i> Financial
                 Management <i data-lucide="chevron-down" size="14" style="margin-left:auto;"></i></div>
             <div class="sub-menu" id="subFinancialSub">
-                <div class="sub-item" id="btn_deposits" onclick="switchPage('deposits')">Deposit records</div>
+                <div class="sub-item" id="btn_deposits" onclick="switchPage('deposits')" data-i18n="sidebar_deposits">
+                    Deposit records</div>
 
                 <!-- New Withdrawals Management Section -->
-                <div class="sub-item" onclick="toggleSub('withdrawals')" style="color: #3b82f6; font-weight: 600;">
+                <div class="sub-item" onclick="toggleSub('withdrawals')" style="color: #3b82f6; font-weight: 600;"
+                    data-i18n="sidebar_withdrawals">
                     <i data-lucide="external-link" size="14"></i> Withdrawals
                     <i data-lucide="chevron-down" size="14" style="margin-left:auto;"></i>
                 </div>
                 <div class="sub-menu" id="withdrawalsSub" style="padding-left: 20px;">
                     <div class="sub-item" id="btn_withdrawals" onclick="switchPage('withdrawals')"
-                        style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px; margin: 5px 0; color: #1d4ed8; font-weight: 700; justify-content: center;">
+                        style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px; margin: 5px 0; color: #1d4ed8; font-weight: 700; justify-content: center;"
+                        data-i18n="sidebar_withdrawals_req">
                         Withdrawal Requests
                     </div>
                 </div>
 
-                <div class="sub-item" id="btn_loans" onclick="switchPage('loans')">Loan records</div>
-                <div class="sub-item" id="btn_rewards" onclick="switchPage('rewards')">Bonus Points Record</div>
+                <div class="sub-item" id="btn_loans" onclick="switchPage('loans')" data-i18n="sidebar_loans">Loan
+                    records</div>
+                <div class="sub-item" id="btn_rewards" onclick="switchPage('rewards')" data-i18n="sidebar_rewards">Bonus
+                    Points Record</div>
             </div>
-            <div class="menu-item" onclick="toggleSub('transaction')"><i data-lucide="repeat" size="18"></i> Transaction
+            <div class="menu-item" onclick="toggleSub('transaction')" data-i18n="sidebar_transactions"><i
+                    data-lucide="repeat" size="18"></i> Transaction
                 records <i data-lucide="chevron-down" size="14" style="margin-left:auto;"></i></div>
             <div class="sub-menu" id="transactionSub">
-                <div class="sub-item" id="btn_stock" onclick="switchPage('stock')">Stock trading</div>
-                <div class="sub-item" id="btn_bulk" onclick="switchPage('bulk')">Large transactions</div>
-                <div class="sub-item" id="btn_ipo" onclick="switchPage('ipo')">IPO</div>
+                <div class="sub-item" id="btn_stock" onclick="switchPage('stock')" data-i18n="sidebar_stock">Stock
+                    trading</div>
+                <div class="sub-item" id="btn_bulk" onclick="switchPage('bulk')" data-i18n="sidebar_bulk">Large
+                    transactions</div>
+                <div class="sub-item" id="btn_ipo" onclick="switchPage('ipo')" data-i18n="sidebar_ipo">IPO</div>
                 <div class="sub-item" id="btn_fund" onclick="switchPage('fund')">Fund trading</div>
                 <div class="sub-item" id="btn_quant" onclick="switchPage('quant')">Quantitative Trading</div>
             </div>
-            <div
-                style="padding: 15px 15px 5px 15px; font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            <div style="padding: 15px 15px 5px 15px; font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;"
+                data-i18n="group_communication">
                 Communication</div>
-            <div class="menu-item" id="btn_messages" onclick="switchPage('messages')"><i data-lucide="send"
-                    size="18"></i> Notification Center</div>
-            <div class="menu-item" id="btn_livechat" onclick="switchPage('livechat')">
+            <div class="menu-item" id="btn_messages" onclick="switchPage('messages')" data-i18n="sidebar_notifications">
+                <i data-lucide="send" size="18"></i> Notification Center
+            </div>
+            <div class="menu-item" id="btn_livechat" onclick="switchPage('livechat')" data-i18n="sidebar_livechat">
                 <i data-lucide="message-circle" size="18"></i> Customer Service Support
                 <span id="chat_badge"
                     style="display:none; background:#ef4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:auto; min-width: 15px; text-align: center; font-weight: 700; box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); animation: pulse-red-admin 2s infinite;">0</span>
@@ -1170,6 +1182,13 @@
     <main>
         <header>
             <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
+                <!-- Language Switcher -->
+                <div class="lang-switcher">
+                    <button class="lang-btn" onclick="switchLang('en')" data-lang="en"
+                        title="English">&#127482;&#127480;</button>
+                    <button class="lang-btn" onclick="switchLang('cn')" data-lang="cn"
+                        title="Chinese">&#127464;&#127475;</button>
+                </div>
                 <button onclick="init()"
                     style="background:none; border:none; color:#f97316; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;">
                     <i data-lucide="refresh-cw" size="14"></i>
@@ -1182,10 +1201,10 @@
                     </div>
 
                     <div class="admin-dropdown" id="adminDropdown">
-                        <a href="admin_settings_account.html">Account Settings</a>
-                        <a href="admin_settings_account.html#security">Security</a>
+                        <a href="admin_settings_account.html" data-i18n="header_settings">Account Settings</a>
+                        <a href="admin_settings_account.html#security" data-i18n="lbl_security">Security</a>
                         <hr>
-                        <button id="dropdownLogoutBtn" onclick="adminLogout()">Logout</button>
+                        <button id="dropdownLogoutBtn" onclick="adminLogout()" data-i18n="header_logout">Logout</button>
                     </div>
                 </div>
             </div>
@@ -1211,7 +1230,7 @@
             <!-- DYNAMIC PAGES -->
             <div id="pageHome" class="vsl-page">
                 <div class="section-card">
-                    <h3>Dashboard Summary</h3>
+                    <h3 data-i18n="lbl_dashboard_summary">Dashboard Summary</h3>
                     <div id="stat_summary" style="display:flex; gap:20px;"></div>
                 </div>
             </div>
@@ -1219,21 +1238,21 @@
             <div id="pageBankAccounts" class="vsl-page" style="display:none;">
                 <div class="section-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2>User Bank Accounts</h2>
+                        <h2 data-i18n="lbl_user_bank_accounts">User Bank Accounts</h2>
                         <button class="vsl-btn orange" onclick="loadBankAccounts()"><i data-lucide="refresh-cw"
-                                size="14"></i> Refresh</button>
+                                size="14"></i> <span data-i18n="btn_refresh">Refresh</span></button>
                     </div>
                     <div style="overflow-x:auto; margin-top:20px;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left; color:#64748b;">
-                                    <th style="padding:12px;">User ID</th>
-                                    <th style="padding:12px;">Account Holder</th>
-                                    <th style="padding:12px;">Bank Name</th>
-                                    <th style="padding:12px;">Account No.</th>
-                                    <th style="padding:12px;">IFSC</th>
-                                    <th style="padding:12px;">Mobile</th>
-                                    <th style="padding:12px;">Date Added</th>
+                                    <th style="padding:12px;" data-i18n="lbl_user_id">User ID</th>
+                                    <th style="padding:12px;" data-i18n="lbl_account_holder">Account Holder</th>
+                                    <th style="padding:12px;" data-i18n="lbl_bank_name">Bank Name</th>
+                                    <th style="padding:12px;" data-i18n="lbl_account_no">Account No.</th>
+                                    <th style="padding:12px;" data-i18n="lbl_ifsc">IFSC</th>
+                                    <th style="padding:12px;" data-i18n="lbl_mobile">Mobile</th>
+                                    <th style="padding:12px;" data-i18n="lbl_date_added">Date Added</th>
                                 </tr>
                             </thead>
                             <tbody id="bankAccountsTableBody">
@@ -1246,11 +1265,13 @@
             <div id="pageMessages" class="vsl-page" style="display:none;">
                 <div class="section-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 style="font-size:1.1rem; margin:0;">Notification Center</h2>
+                        <h2 style="font-size:1.1rem; margin:0;" data-i18n="lbl_notification_center">Notification Center
+                        </h2>
                         <div style="display:flex; gap:10px;">
                             <button class="vsl-btn orange" onclick="init()"><i data-lucide="refresh-cw" size="14"></i>
-                                refresh</button>
-                            <button class="vsl-btn green" onclick="openMsgModal()">Create a new notification</button>
+                                <span data-i18n="btn_refresh">refresh</span></button>
+                            <button class="vsl-btn green" onclick="openMsgModal()"
+                                data-i18n="btn_create_notification">Create a new notification</button>
                         </div>
                     </div>
 
@@ -1296,13 +1317,15 @@
                             style="width: 320px; background: #fff; border-right: 1px solid #f1f5f9;">
                             <div class="msg-search-box"
                                 style="padding: 20px; background: #fff; border-bottom: 1px solid #f1f5f9;">
-                                <h2 style="font-size: 1.1rem; margin: 0 0 15px 0; color: #1e293b; font-weight: 700;">
+                                <h2 style="font-size: 1.1rem; margin: 0 0 15px 0; color: #1e293b; font-weight: 700;"
+                                    data-i18n="lbl_chat_support">
                                     Chat Support</h2>
                                 <div style="position: relative;">
                                     <i data-lucide="search" size="14"
                                         style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
                                     <input type="text" id="chatSearch" class="msg-search-input"
                                         placeholder="Search user..." oninput="filterChatUsers()"
+                                        data-i18n="ph_search_user"
                                         style="padding-left: 35px; background: #f8fafc; border: 1px solid #e2e8f0;">
                                 </div>
                             </div>
@@ -1342,7 +1365,8 @@
                                 <div
                                     style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 15px;">
                                     <i data-lucide="message-square" size="48" style="opacity: 0.2;"></i>
-                                    <div style="font-size: 0.9rem;">Select a user to start chatting</div>
+                                    <div style="font-size: 0.9rem;" data-i18n="ph_select_chat">Select a user to start
+                                        chatting</div>
                                 </div>
                             </div>
 
@@ -1352,6 +1376,7 @@
                                     <input type="text" id="adminChatInput" class="msg-search-input"
                                         placeholder="Write your message..."
                                         onkeypress="if(event.key === 'Enter') sendAdminChat()"
+                                        data-i18n="ph_write_message"
                                         style="border-radius: 25px; padding: 12px 20px; background: #f8fafc; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
                                 </div>
                                 <button class="vsl-btn orange" onclick="sendAdminChat()"
@@ -1370,83 +1395,92 @@
                     <div class="kyc-verify-header">
                         <div class="kyc-verify-filters">
                             <div class="kyc-filter-item">
-                                <label>Username</label>
+                                <label data-i18n="lbl_username">Username</label>
                                 <input type="text" id="kf_user" class="kyc-filter-input"
-                                    placeholder="Please enter your username" oninput="filterKyc()">
+                                    placeholder="Please enter your username" oninput="filterKyc()"
+                                    data-i18n="ph_enter_username">
                             </div>
                             <div class="kyc-filter-item">
-                                <label>Customer's Full Name</label>
+                                <label data-i18n="lbl_customer_fullname">Customer's Full Name</label>
                                 <input type="text" id="kf_name" class="kyc-filter-input"
-                                    placeholder="Please enter the customer's full name" oninput="filterKyc()">
+                                    placeholder="Please enter the customer's full name" oninput="filterKyc()"
+                                    data-i18n="ph_enter_customer_fullname">
                             </div>
                             <div class="kyc-filter-item">
-                                <label>Customer-Verified Mobile Phone Number</label>
+                                <label data-i18n="lbl_customer_mobile">Customer-Verified Mobile Phone Number</label>
                                 <input type="text" id="kf_phone" class="kyc-filter-input"
-                                    placeholder="Please enter your verified mobile phone number" oninput="filterKyc()">
+                                    placeholder="Please enter your verified mobile phone number" oninput="filterKyc()"
+                                    data-i18n="ph_enter_verified_mobile">
                             </div>
                             <div class="kyc-filter-item">
-                                <label>Salesperson</label>
+                                <label data-i18n="lbl_salesperson">Salesperson</label>
                                 <input type="text" id="kf_sales" class="kyc-filter-input"
-                                    placeholder="Please enter the business name" oninput="filterKyc()">
+                                    placeholder="Please enter the business name" oninput="filterKyc()"
+                                    data-i18n="ph_enter_business_name">
                             </div>
                         </div>
                         <button class="kyc-refresh-btn" onclick="init()"><i data-lucide="refresh-cw" size="16"></i>
-                            refresh</button>
+                            <span data-i18n="btn_refresh">refresh</span></button>
                     </div>
 
                     <div class="kyc-status-bar">
-                        <div class="kyc-status-pill active" onclick="setStatusFilter('all', this)">all</div>
-                        <div class="kyc-status-pill" onclick="setStatusFilter('Approved', this)">Approved</div>
-                        <div class="kyc-status-pill" onclick="setStatusFilter('Rejected', this)">reject</div>
-                        <div class="kyc-status-pill" onclick="setStatusFilter('Pending', this)">Pending review</div>
-                        <div class="kyc-status-pill" onclick="setStatusFilter('NotSubmitted', this)">Not submitted</div>
+                        <div class="kyc-status-pill active" onclick="setStatusFilter('all', this)"
+                            data-i18n="lbl_total">all</div>
+                        <div class="kyc-status-pill" onclick="setStatusFilter('Approved', this)"
+                            data-i18n="status_approved">Approved</div>
+                        <div class="kyc-status-pill" onclick="setStatusFilter('Rejected', this)" data-i18n="lbl_reject">
+                            reject</div>
+                        <div class="kyc-status-pill" onclick="setStatusFilter('Pending', this)"
+                            data-i18n="lbl_pending_review">Pending review</div>
+                        <div class="kyc-status-pill" onclick="setStatusFilter('NotSubmitted', this)"
+                            data-i18n="lbl_not_submitted">Not submitted</div>
                     </div>
 
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left; border-top: 1px solid #e2e8f0;">
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_customer_username">
                                         Customer (username)</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_state">
                                         state</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_verify_mobile">
                                         Verify mobile phone number</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_email">
                                         Email</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_full_name">
                                         Full name</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_gender">
                                         Gender</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_dob">
                                         Date of Birth</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_id_number">
                                         ID number</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_id_photo_front">
                                         ID photo (front view)</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_id_photo_back">
                                         ID photo (back)</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_salesperson">
                                         salesperson</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_application_time">
                                         Application time</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_information">
                                         information</th>
-                                    <th
-                                        style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.7rem; color:#1e293b; border-bottom:1px solid #e2e8f0;"
+                                        data-i18n="th_operate">
                                         operate</th>
                                 </tr>
                             </thead>
@@ -1457,31 +1491,31 @@
             </div>
             <div id="pageUsers" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Customer Management</h3>
+                    <h3 data-i18n="title_customer_mgmt">Customer Management</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_client">
                                         Client</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_name">
                                         Name</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_balance">
                                         Balance</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_vip">
                                         VIP</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_credit">
                                         Credit</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_pin">
                                         PIN</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_operate">
                                         Operate</th>
                                 </tr>
                             </thead>
@@ -1492,28 +1526,28 @@
             </div>
             <div id="pageDeposits" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Deposit records</h3>
+                    <h3 data-i18n="title_deposit_records">Deposit records</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_id">
                                         ID</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_amount">
                                         Amount</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_status">
                                         Status</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Time</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_operate">
                                         Operate</th>
                                 </tr>
                             </thead>
@@ -1524,31 +1558,31 @@
             </div>
             <div id="pageWithdrawals" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Withdrawal records</h3>
+                    <h3 data-i18n="title_withdrawal_records">Withdrawal records</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="lbl_user_id">
                                         User ID</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="lbl_username">
                                         Username</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_amount">
                                         Amount</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_bank_account">
                                         Bank Account</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_status">
                                         Status</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Date Submitted</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_operate">
                                         Operate</th>
                                 </tr>
                             </thead>
@@ -1561,32 +1595,32 @@
             <!-- Page: Loans -->
             <div id="pageLoans" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Loan records</h3>
+                    <h3 data-i18n="title_loan_records">Loan records</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_id">
                                         ID</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_loan_amount">
                                         Loan Amount</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_status">
                                         Status</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Time</th>
                                 </tr>
                             </thead>
                             <tbody id="loanList">
                                 <tr>
-                                    <td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">No records
-                                        found.</td>
+                                    <td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;"
+                                        data-i18n="no_data">No records found.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1597,28 +1631,29 @@
             <!-- Page: Rewards -->
             <div id="pageRewards" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Bonus Points Record</h3>
+                    <h3 data-i18n="sidebar_rewards">Bonus Points Record</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_points">
                                         Points</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_type">
                                         Type</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Time</th>
                                 </tr>
                             </thead>
                             <tbody id="rewardList">
                                 <tr>
-                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No records
+                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;"
+                                        data-i18n="no_data">No records
                                         found.</td>
                                 </tr>
                             </tbody>
@@ -1630,31 +1665,32 @@
             <!-- Page: Stock -->
             <div id="pageStock" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Stock trading</h3>
+                    <h3 data-i18n="sidebar_stock">Stock trading</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_symbol">
                                         Symbol</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_side">
                                         Side</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_qty">
                                         Qty</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_price">
                                         Price</th>
                                 </tr>
                             </thead>
                             <tbody id="stockList">
                                 <tr>
-                                    <td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">No records
+                                    <td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;"
+                                        data-i18n="no_data">No records
                                         found.</td>
                                 </tr>
                             </tbody>
@@ -1666,28 +1702,29 @@
             <!-- Page: Bulk -->
             <div id="pageBulk" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Large transactions</h3>
+                    <h3 data-i18n="sidebar_bulk">Large transactions</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_asset">
                                         Asset</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_volume">
                                         Volume</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Time</th>
                                 </tr>
                             </thead>
                             <tbody id="bulkList">
                                 <tr>
-                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No records
+                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;"
+                                        data-i18n="no_data">No records
                                         found.</td>
                                 </tr>
                             </tbody>
@@ -1699,28 +1736,29 @@
             <!-- Page: IPO -->
             <div id="pageIpo" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>IPO</h3>
+                    <h3 data-i18n="sidebar_ipo">IPO</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_ipo_name">
                                         IPO Name</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_status">
                                         Status</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_date">
                                         Date</th>
                                 </tr>
                             </thead>
                             <tbody id="ipoList">
                                 <tr>
-                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No records
+                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;"
+                                        data-i18n="no_data">No records
                                         found.</td>
                                 </tr>
                             </tbody>
@@ -1732,28 +1770,29 @@
             <!-- Page: Fund -->
             <div id="pageFund" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Fund trading</h3>
+                    <h3 data-i18n="sidebar_fund">Fund trading</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_fund_name">
                                         Fund Name</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_amount">
                                         Amount</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Time</th>
                                 </tr>
                             </thead>
                             <tbody id="fundList">
                                 <tr>
-                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No records
+                                    <td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;"
+                                        data-i18n="no_data">No records
                                         found.</td>
                                 </tr>
                             </tbody>
@@ -1766,19 +1805,20 @@
             <!-- Product Management Page -->
             <div id="pageProducts" class="vsl-page" style="display:none;">
                 <div class="vsl-header">
-                    <h2 class="vsl-title">Product Management</h2>
-                    <button class="vsl-btn-primary" onclick="openAddProductModal()">+ Add Product</button>
+                    <h2 class="vsl-title" data-i18n="sidebar_products">Product Management</h2>
+                    <button class="vsl-btn-primary" onclick="openAddProductModal()">+ <span data-i18n="btn_add">Add
+                            Product</span></button>
                 </div>
                 <div class="section-card">
                     <div class="vsl-table-wrap">
                         <table class="vsl-table">
                             <thead>
                                 <tr>
-                                    <th>Product Name</th>
-                                    <th>Estimated Profit</th>
-                                    <th>Listing Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th data-i18n="th_name">Product Name</th>
+                                    <th data-i18n="th_profit">Estimated Profit</th>
+                                    <th data-i18n="th_listing_date">Listing Date</th>
+                                    <th data-i18n="th_status">Status</th>
+                                    <th data-i18n="th_actions">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="productList">
@@ -1809,22 +1849,22 @@
 
             <div id="pageQuant" class="vsl-page" style="display:none;">
                 <div class="section-card">
-                    <h3>Quantitative Trading</h3>
+                    <h3 data-i18n="sidebar_quant">Quantitative Trading</h3>
                     <div class="vsl-table-wrap">
                         <table class="vsl-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f8fafc; text-align:left;">
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_type">
                                         Strategy</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_profit">
                                         Profit</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_user">
                                         User</th>
-                                    <th
-                                        style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;">
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_time">
                                         Time</th>
                                 </tr>
                             </thead>
@@ -1845,56 +1885,69 @@
     <div id="editKycModal" class="kyc-modal-overlay">
         <div class="kyc-modal-card">
             <div class="kyc-modal-header">
-                <span>Edit KYC</span>
+                <span data-i18n="modal_edit_kyc">Edit KYC</span>
                 <i data-lucide="x" style="cursor:pointer" onclick="closeEditKyc()"></i>
             </div>
             <div class="kyc-modal-body">
                 <div class="kyc-grid">
                     <div class="kyc-form-group">
-                        <label>Username <span style="color:#ef4444">*</span></label>
-                        <input type="text" id="ek_name" class="kyc-input" placeholder="Enter username">
+                        <label><span data-i18n="lbl_username">Username</span> <span
+                                style="color:#ef4444">*</span></label>
+                        <input type="text" id="ek_name" class="kyc-input" placeholder="Enter username"
+                            data-i18n="ph_enter_username">
                     </div>
                     <div class="kyc-form-group">
-                        <label>Full Name <span style="color:#ef4444">*</span></label>
-                        <input type="text" id="ek_fullname" class="kyc-input" placeholder="Enter full name">
+                        <label><span data-i18n="lbl_full_name">Full Name</span> <span
+                                style="color:#ef4444">*</span></label>
+                        <input type="text" id="ek_fullname" class="kyc-input" placeholder="Enter full name"
+                            data-i18n="ph_enter_fullname">
                     </div>
                     <div class="kyc-form-group">
-                        <label>ID Card <span style="color:#ef4444">*</span></label>
-                        <input type="text" id="ek_idnum" class="kyc-input" placeholder="Enter ID number">
+                        <label><span data-i18n="lbl_id_card">ID Card</span> <span style="color:#ef4444">*</span></label>
+                        <input type="text" id="ek_idnum" class="kyc-input" placeholder="Enter ID number"
+                            data-i18n="ph_enter_idnum">
                     </div>
                     <div class="kyc-form-group">
-                        <label>phone number <span style="color:#ef4444">*</span></label>
-                        <input type="text" id="ek_phone" class="kyc-input" placeholder="Enter phone">
+                        <label><span data-i18n="lbl_phone">phone number</span> <span
+                                style="color:#ef4444">*</span></label>
+                        <input type="text" id="ek_phone" class="kyc-input" placeholder="Enter phone"
+                            data-i18n="ph_enter_phone">
                     </div>
                     <div class="kyc-form-group">
-                        <label>Email <span style="color:#ef4444">*</span></label>
-                        <input type="text" id="ek_email" class="kyc-input" placeholder="Enter email">
+                        <label><span data-i18n="lbl_email">Email</span> <span style="color:#ef4444">*</span></label>
+                        <input type="text" id="ek_email" class="kyc-input" placeholder="Enter email"
+                            data-i18n="ph_enter_email">
                     </div>
                     <div class="kyc-form-group">
-                        <label>Date of birth <span style="color:#ef4444">*</span></label>
+                        <label><span data-i18n="lbl_dob">Date of birth</span> <span
+                                style="color:#ef4444">*</span></label>
                         <input type="text" id="ek_dob" class="kyc-input" placeholder="Enter DOB (YYYY-MM-DD)">
                     </div>
                     <div class="kyc-form-group">
-                        <label>Gender <span style="color:#ef4444">*</span></label>
+                        <label><span data-i18n="lbl_gender">Gender</span> <span style="color:#ef4444">*</span></label>
                         <select id="ek_gender" class="kyc-input">
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
+                            <option value="" data-i18n="ph_select_gender">Select Gender</option>
+                            <option value="Male" data-i18n="opt_male">Male</option>
+                            <option value="Female" data-i18n="opt_female">Female</option>
+                            <option value="Other" data-i18n="opt_other">Other</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="kyc-form-group" style="margin-bottom:20px;">
-                    <label>Withdrawal PIN <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">(Edit to
+                    <label><span data-i18n="lbl_withdrawal_pin">Withdrawal PIN</span> <span
+                            style="color:#94a3b8; font-weight:400; font-size:0.75rem;" data-i18n="pin_reset_hint">(Edit
+                            to
                             reset user PIN)</span></label>
-                    <input type="text" id="ek_pin" class="kyc-input" placeholder="User PIN (e.g. 123456)">
+                    <input type="text" id="ek_pin" class="kyc-input" placeholder="User PIN (e.g. 123456)"
+                        data-i18n="ph_enter_pin">
                 </div>
 
                 <div class="kyc-image-grid">
                     <div>
                         <label
-                            style="display:block; margin-bottom:8px; font-weight:500; font-size:0.8rem; color:#64748b;">Front
+                            style="display:block; margin-bottom:8px; font-weight:500; font-size:0.8rem; color:#64748b;"
+                            data-i18n="lbl_front_id">Front
                             of the document</label>
                         <div class="kyc-img-box" onclick="document.getElementById('ek_front_file').click()">
                             <i data-lucide="plus" class="kyc-plus-icon" id="ek_front_plus"></i>
@@ -1904,12 +1957,14 @@
                             <input type="file" id="ek_front_file" hidden accept="image/*"
                                 onchange="uploadKycFile(this, 'front')">
                         </div>
-                        <p class="kyc-img-hint">Supported formats: JPG, PNG, WEBP, GIF, BMP, SVG, ICO, HEIC. Maximum of
+                        <p class="kyc-img-hint" data-i18n="img_hint">Supported formats: JPG, PNG, WEBP, GIF, BMP, SVG,
+                            ICO, HEIC. Maximum of
                             1 image.</p>
                     </div>
                     <div>
                         <label
-                            style="display:block; margin-bottom:8px; font-weight:500; font-size:0.8rem; color:#64748b;">Back
+                            style="display:block; margin-bottom:8px; font-weight:500; font-size:0.8rem; color:#64748b;"
+                            data-i18n="lbl_back_id">Back
                             of the document</label>
                         <div class="kyc-img-box" onclick="document.getElementById('ek_back_file').click()">
                             <i data-lucide="plus" class="kyc-plus-icon" id="ek_back_plus"></i>
@@ -1919,32 +1974,36 @@
                             <input type="file" id="ek_back_file" hidden accept="image/*"
                                 onchange="uploadKycFile(this, 'back')">
                         </div>
-                        <p class="kyc-img-hint">Supported formats: JPG, PNG, WEBP, GIF, BMP, SVG, ICO, HEIC. Maximum of
+                        <p class="kyc-img-hint" data-i18n="img_hint">Supported formats: JPG, PNG, WEBP, GIF, BMP, SVG,
+                            ICO, HEIC. Maximum of
                             1 image.</p>
                     </div>
                 </div>
 
                 <div class="kyc-form-group" style="margin-top:20px;">
-                    <label>Authentication status <span style="color:#ef4444">*</span></label>
+                    <label><span data-i18n="lbl_auth_status">Authentication status</span> <span
+                            style="color:#ef4444">*</span></label>
                     <select id="ek_status" class="kyc-input">
-                        <option value="Pending">待审核 (Pending)</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="Pending" data-i18n="status_pending">Pending</option>
+                        <option value="Approved" data-i18n="status_approved">Approved</option>
+                        <option value="Rejected" data-i18n="status_rejected">Rejected</option>
                     </select>
                 </div>
 
                 <div class="kyc-form-group">
-                    <label>Notes (visible to customer)</label>
-                    <textarea id="ek_notes" class="kyc-input" rows="3" placeholder="Please enter a note."></textarea>
+                    <label data-i18n="lbl_notes">Notes (visible to customer)</label>
+                    <textarea id="ek_notes" class="kyc-input" rows="3" placeholder="Please enter a note."
+                        data-i18n="ph_enter_notes"></textarea>
                 </div>
 
-                <div class="kyc-status-warning">
+                <div class="kyc-status-warning" data-i18n="kyc_warning">
                     Editing customer's real-name information: Authentication status cannot be modified.
                 </div>
             </div>
             <div class="kyc-modal-footer">
-                <button class="vsl-btn submit" id="ek_save_btn" onclick="saveEditKyc()">submit</button>
-                <button class="vsl-btn cancel" onclick="closeEditKyc()">Cancel</button>
+                <button class="vsl-btn submit" id="ek_save_btn" onclick="saveEditKyc()"
+                    data-i18n="btn_submit">submit</button>
+                <button class="vsl-btn cancel" onclick="closeEditKyc()" data-i18n="btn_cancel">Cancel</button>
             </div>
         </div>
     </div>
@@ -1952,17 +2011,17 @@
     <!-- NEW MESSAGE MODAL -->
     <div id="msgModal" class="loader" style="background:rgba(0,0,0,0.5); z-index:2000;">
         <div class="section-card" style="width:550px; min-height:auto;">
-            <h3>Create New Notification</h3>
+            <h3 data-i18n="modal_new_notification">Create New Notification</h3>
             <select id="msgTarget"
                 style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;"></select>
-            <input id="msgTitle" placeholder="Enter message title"
+            <input id="msgTitle" placeholder="Enter message title" data-i18n="ph_enter_msg_title"
                 style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-            <textarea id="msgBody" rows="8" placeholder="Enter message content..."
+            <textarea id="msgBody" rows="8" placeholder="Enter message content..." data-i18n="ph_enter_msg_body"
                 style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;"></textarea>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="vsl-btn"
-                    onclick="document.getElementById('msgModal').style.display='none'">Cancel</button>
-                <button class="vsl-btn green" onclick="sendMsg()">Confirm Send</button>
+                <button class="vsl-btn" onclick="document.getElementById('msgModal').style.display='none'"
+                    data-i18n="btn_cancel">Cancel</button>
+                <button class="vsl-btn green" onclick="sendMsg()" data-i18n="btn_confirm">Confirm Send</button>
             </div>
         </div>
     </div>
@@ -2432,12 +2491,16 @@
                     `;
             }).join('');
             lucide.createIcons();
+            window.applyLanguage(localStorage.getItem('admin_lang') || 'cn');
         }
 
 
         function renderMessages(msgs) {
             const list = document.getElementById('sentMsgs');
-            if (!msgs.length) { list.innerHTML = '<p style="text-align:center; padding:40px; color:#94a3b8;">No records found.</p>'; return; }
+            if (!msgs.length) {
+                list.innerHTML = `<p style="text-align:center; padding:40px; color:#94a3b8;" data-i18n="no_data">${window.i18n('no_data', 'No records found.')}</p>`;
+                return;
+            }
 
             // Filter: ONLY internal messages (JSON notifications)
             const filtered = msgs.filter(x => {
@@ -3544,7 +3607,14 @@
             }, 300);
         }
 
-        window.onload = () => { switchPage('home'); init(); };
+        window.onload = () => {
+            const savedLang = localStorage.getItem('admin_lang') || 'cn';
+            window.applyLanguage(savedLang);
+            switchPage('home');
+            init();
+        };
+        window.switchLang = function (l) { window.applyLanguage(l); };
+
     </script>
 
     <div id="addProductModal" class="vsl-modal">

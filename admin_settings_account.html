@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <title>Avendus Capital - Admin Suite</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -352,26 +353,24 @@
 <body>
     <aside>
         <div class="logo-area">
-            <div class="logo-box"></div> Avendus Capital
+            <div class="logo-box"></div> <span data-i18n="admin_suite">Admin Suite</span>
         </div>
         <nav class="nav-menu">
-            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_front_page"><i
-                    data-lucide="home" size="18"></i> 项目首页</a>
-            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_kyc"><i
-                    data-lucide="user-check" size="18"></i>
-                实名认证</a>
-            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_users"><i data-lucide="users"
-                    size="18"></i> 客户管理</a>
+            <a href="admin_customer_management.html" class="menu-item" data-i18n="sidebar_front_page"><i
+                    data-lucide="home" size="18"></i> Home</a>
+            <a href="admin_customer_management.html" class="menu-item" data-i18n="sidebar_kyc"><i
+                    data-lucide="user-check" size="18"></i> KYC Auth</a>
+            <a href="admin_customer_management.html" class="menu-item" data-i18n="sidebar_users"><i data-lucide="users"
+                    size="18"></i> Users</a>
             <a href="admin_customer_management.html" class="menu-item" id="btn_bank_accounts"
-                data-key="sidebar_bank_accounts"><i data-lucide="credit-card" size="18"></i> 银行账户</a>
-            <a href="admin_customer_management.html" class="menu-item" data-key="sidebar_products"><i data-lucide="box"
-                    size="18"></i> 产品管理</a>
-            <a href="admin_customer_management.html" class="menu-item" id="btn_stock057" data-key="sidebar_stock057"><i
-                    data-lucide="trending-up" size="18"></i>
-                机构股票057</a>
+                data-i18n="sidebar_bank_accounts"><i data-lucide="credit-card" size="18"></i> Bank Accounts</a>
+            <a href="admin_customer_management.html" class="menu-item" data-i18n="sidebar_products"><i data-lucide="box"
+                    size="18"></i> Products</a>
+            <a href="admin_customer_management.html" class="menu-item" id="btn_stock057" data-i18n="sidebar_stock057"><i
+                    data-lucide="trending-up" size="18"></i> Stock 057</a>
             <a href="admin_settings_account.html" class="menu-item active" id="btn_account_settings"
-                data-key="sidebar_account_settings" style="display: none;"><i data-lucide="settings" size="18"></i>
-                账号设置</a>
+                data-i18n="sidebar_account_settings" style="display: none;"><i data-lucide="settings" size="18"></i>
+                Account Settings</a>
 
             <style>
                 .admin-user-menu {
@@ -477,10 +476,12 @@
                     </div>
 
                     <div class="admin-dropdown" id="adminDropdown">
-                        <a href="admin_settings_account.html" data-key="header_settings">账号设置</a>
+                        <a href="admin_settings_account.html"
+                            data-i18n="header_settings">${window.i18n('header_settings', 'Account Settings')}</a>
 
                         <hr>
-                        <button id="dropdownLogoutBtn" onclick="adminLogout()" data-key="header_logout">退出登录</button>
+                        <button id="dropdownLogoutBtn" onclick="adminLogout()"
+                            data-i18n="header_logout">${window.i18n('header_logout', 'Logout')}</button>
                     </div>
                 </div>
             </div>
@@ -499,37 +500,37 @@
                 });
 
                 function adminLogout() {
-                    showConfirm("Logout from admin terminal?", () => {
+                    showConfirm(window.i18n('msg_confirm_logout', "Logout from admin terminal?"), () => {
                         sessionStorage.removeItem('admin_auth');
                         window.location.href = 'admin_login.html';
-                    }, "Confirm Logout");
+                    }, window.i18n('lbl_confirm_logout', "Confirm Logout"));
                 }
             </script>
         </header>
 
         <div class="container">
             <div class="section-card">
-                <h2 class="form-group" style="margin-top:0" data-key="title_settings">Account Settings</h2>
+                <h2 class="form-group" style="margin-top:0" data-i18n="title_settings">Account Settings</h2>
 
                 <!-- Change Password -->
-                <h3 class="form-label" style="font-size: 1rem;" data-key="btn_update_password">Change Password</h3>
+                <h3 class="form-label" style="font-size: 1rem;" data-i18n="btn_update_password">Change Password</h3>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="form-label" data-key="lbl_current_pass">Current Password</label>
+                        <label class="form-label" data-i18n="lbl_current_pass">Current Password</label>
                         <input type="password" id="currentPassword" class="vsl-input">
                     </div>
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="form-label" data-key="lbl_new_pass">New Password</label>
+                        <label class="form-label" data-i18n="lbl_new_pass">New Password</label>
                         <input type="password" id="newPassword" class="vsl-input">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" data-key="lbl_confirm_pass">Confirm New Password</label>
+                        <label class="form-label" data-i18n="lbl_confirm_pass">Confirm New Password</label>
                         <input type="password" id="confirmPassword" class="vsl-input">
                     </div>
                 </div>
-                <button id="btnUpdatePassword" class="vsl-btn vsl-btn-primary" data-key="btn_update_password">Update
+                <button id="btnUpdatePassword" class="vsl-btn vsl-btn-primary" data-i18n="btn_update_password">Update
                     Password</button>
             </div>
         </div>
@@ -539,8 +540,8 @@
     <script>
         lucide.createIcons();
 
-        function showConfirm(msg, onConfirm, title = "Confirm Action") {
-            // Remove duplicates (Requirement 3)
+        function showConfirm(msg, onConfirm, title) {
+            // Remove duplicates
             const overlays = document.querySelectorAll('.confirm-modal-overlay');
             if (overlays.length > 1) {
                 overlays.forEach((ov, idx) => { if (idx > 0) ov.remove(); });
@@ -552,18 +553,18 @@
             const confirmBtn = document.getElementById('confirmDeleteBtn');
             const cancelBtn = modal.querySelector('.confirm-modal-btn.cancel');
 
-            if (titleEl) titleEl.textContent = title;
+            if (titleEl) titleEl.textContent = title || window.i18n('modal_confirm_action', "Confirm Action");
             msgEl.textContent = msg;
 
             modal.style.display = 'flex';
             modal.style.zIndex = '9998';
             modal.style.pointerEvents = 'auto';
             document.body.style.overflow = 'hidden';
-            document.body.style.pointerEvents = 'none'; // Block background (Requirement 2)
+            document.body.style.pointerEvents = 'none'; // Block background
 
             setTimeout(() => modal.classList.add('active'), 10);
 
-            // Re-bind buttons to clear old listeners (Requirement 4)
+            // Re-bind buttons to clear old listeners
             const newConfirmBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
             newConfirmBtn.addEventListener('click', () => {
@@ -587,7 +588,7 @@
                 setTimeout(() => {
                     modal.style.display = 'none';
                     document.body.style.overflow = '';
-                    document.body.style.pointerEvents = 'auto'; // Restore background (Requirement 2)
+                    document.body.style.pointerEvents = 'auto'; // Restore background
                 }, 300);
             }
         }
@@ -603,7 +604,7 @@
                     <div class="confirm-modal-icon-box" id="alertIconBox">
                         <i id="alertIcon" data-lucide="info" size="44"></i>
                     </div>
-                    <h3 id="alertTitle" class="confirm-modal-title">Notification</h3>
+                    <h3 id="alertTitle" class="confirm-modal-title" data-i18n="lbl_notification">Notification</h3>
                     <p id="alertMsg" class="confirm-modal-message"></p>
                     <div class="confirm-modal-footer" style="justify-content: center;">
                         <button class="confirm-modal-btn delete" id="alertBtn" onclick="closeAlertModal()" style="background:var(--primary-blue); width: 100%; border:none;">OK</button>
@@ -620,7 +621,7 @@
             const btn = document.getElementById('alertBtn') || modal.querySelector('#alertBtn');
 
             let iconName = 'info';
-            let defaultTitle = 'Notification';
+            let defaultTitle = window.i18n('lbl_notification', 'Notification');
             let color = '#3b82f6';
             let bgColor = '#eff6ff'; // light blue
 
@@ -628,17 +629,17 @@
                 iconName = 'check-circle';
                 color = '#10b981';
                 bgColor = '#ecfdf5'; // light green
-                defaultTitle = 'Success';
+                defaultTitle = window.i18n('modal_success', 'Success');
             } else if (type === 'error') {
                 iconName = 'x-circle';
                 color = '#ef4444';
                 bgColor = '#fef2f2'; // light red
-                defaultTitle = 'Error';
+                defaultTitle = window.i18n('status_error', 'Error');
             } else if (type === 'warning') {
                 iconName = 'alert-triangle';
                 color = '#f59e0b';
                 bgColor = '#fffbeb'; // light yellow
-                defaultTitle = 'Warning';
+                defaultTitle = window.i18n('status_warning', 'Warning');
             }
 
             if (iconEl) {
@@ -666,6 +667,25 @@
                 }, 300);
             }
         }
+
+        function switchLang(l) {
+            localStorage.setItem('admin_lang', l);
+            window.applyLanguage(l);
+            // Update active state of buttons
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-lang') === l);
+            });
+        }
+
+        // Initialize language
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentLang = localStorage.getItem('admin_lang') || 'cn';
+            window.applyLanguage(currentLang);
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-lang') === currentLang);
+            });
+            lucide.createIcons();
+        });
     </script>
 
     <!-- CONFIRM DELETE MODAL -->
@@ -675,11 +695,11 @@
             <div class="confirm-modal-icon-box">
                 <i data-lucide="alert-triangle" size="44"></i>
             </div>
-            <h3 id="confirmModalTitle" class="confirm-modal-title">Confirm Action</h3>
+            <h3 id="confirmModalTitle" class="confirm-modal-title" data-i18n="modal_confirm_action">Confirm Action</h3>
             <p id="confirmModalMsg" class="confirm-modal-message"></p>
             <div class="confirm-modal-footer">
-                <button class="confirm-modal-btn cancel">Cancel</button>
-                <button id="confirmDeleteBtn" class="confirm-modal-btn delete">Confirm</button>
+                <button class="confirm-modal-btn cancel" data-i18n="btn_cancel">Cancel</button>
+                <button id="confirmDeleteBtn" class="confirm-modal-btn delete" data-i18n="btn_confirm">Confirm</button>
             </div>
         </div>
     </div>

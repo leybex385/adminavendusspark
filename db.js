@@ -127,6 +127,31 @@ window.DB = {
             return { success: false, message: "System error during invitation validation." };
         }
 
+        // STRICT PRE-REGISTRATION DUPLICATE CHECK (SEPARATE)
+        if (email) {
+            const { data: existingEmail } = await client
+                .from('users')
+                .select('id')
+                .eq('email', email)
+                .limit(1);
+            if (existingEmail && existingEmail.length > 0) {
+                showAlert("warning", "This email is already registered.");
+                return { success: false, message: "This email is already registered." };
+            }
+        }
+
+        if (mobile) {
+            const { data: existingPhone } = await client
+                .from('users')
+                .select('id')
+                .eq('mobile', mobile)
+                .limit(1);
+            if (existingPhone && existingPhone.length > 0) {
+                showAlert("warning", "This mobile number is already registered.");
+                return { success: false, message: "This mobile number is already registered." };
+            }
+        }
+
         const { data, error } = await client
             .from('users')
             .insert([insertData])
