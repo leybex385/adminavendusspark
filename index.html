@@ -287,11 +287,12 @@
                     throw new Error(window.i18n('err_invalid_creds', "Invalid credentials."));
                 }
 
-                // Store EXACTLY: { id, username, role }
+                // Store: { id, username, role, invitation_code }
                 const authObject = {
                     id: admin.id,
                     username: admin.username,
-                    role: admin.role
+                    role: admin.role,
+                    invitation_code: admin.invitation_code || null
                 };
 
                 sessionStorage.setItem('admin_auth', JSON.stringify(authObject));
