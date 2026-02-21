@@ -872,9 +872,12 @@ window.DB = {
         if (updateData.hasOwnProperty('trading_frozen')) {
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             if (auth.role === 'csr') {
-                const { data: target } = await client.from('users').select('csr_id').eq('id', id).single();
-                if (target && target.csr_id != auth.id) {
-                    return { success: false, error: "Unauthorized: Access denied to users of other CSRs." };
+                const { data: target } = await client.from('users').select('csr_id, invitation_code').eq('id', id).single();
+                const hasCsrIdMatch = target && target.csr_id == auth.id;
+                const hasInvCodeMatch = target && auth.invitation_code && target.invitation_code === auth.invitation_code;
+
+                if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                    return { success: false, error: "Unauthorized: Access denied to users managed by other CSRs." };
                 }
             } else if (auth.role !== 'super_admin') {
                 // Only CSR and Super Admin can manage this if logged in as admin
