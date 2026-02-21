@@ -80,9 +80,7 @@
             'btn_messages',        // Notification Center
             'btn_livechat',        // Customer Service Support
             'btn_account_settings', // Account Settings
-            'btn_products',        // Product Management
-            'btn_transaction',     // Transaction Records (was IPO Management for CSR)
-            'transactionSub'       // Transaction Records Sub-menu
+            'btn_products'         // Product Management
         ];
 
         restrictedIds.forEach(id => {
@@ -98,8 +96,8 @@
             }
         });
 
-        // Under Transaction Records: Remove Stock, Bulk, OTC. Keep IPO.
-        const restrictedSubItems = ['btn_stock', 'btn_bulk', 'btn_otc'];
+        // Under Transaction Records: Remove Stock, Bulk. Keep IPO and OTC.
+        const restrictedSubItems = ['btn_stock', 'btn_bulk'];
         restrictedSubItems.forEach(sid => {
             const el = document.getElementById(sid);
             if (el) el.remove();
@@ -133,8 +131,7 @@
             'button[onclick*="openAddAdminModal"]',
             'button[onclick*="createAdmin"]',
             'button[onclick*="changeRole"]',
-            'div[onclick*="switchPage(\'products\')"]',
-            'div[onclick*="switchPage(\'ipo\')"]'
+            'div[onclick*="switchPage(\'products\')"]'
         ];
         restrictedSelectors.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => el.remove());
