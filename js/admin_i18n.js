@@ -54,7 +54,7 @@
             "th_trading_status": "交易状态",
 
             // Page Titles
-            "title_dash": "仪表盘概览",
+            "title_dash": "控制台",
             "title_kyc": "实名认证审核",
             "title_users": "客户账号管理",
             "title_deposits": "充值明细",
@@ -69,9 +69,9 @@
             "btn_delete": "删除",
             "btn_deactivate": "封禁账号",
             "btn_activate": "解封账号",
-            "btn_create_csr": "创建CSR账号",
-            "btn_approve": "批准",
-            "btn_reject": "驳回",
+            "btn_create_csr": "创建业务员账号",
+            "btn_approve": "审核通过",
+            "btn_reject": "审核拒绝",
             "btn_update_password": "更新登录密码",
 
             // Form Labels
@@ -94,7 +94,7 @@
             "search_placeholder": "搜索..."
             // Login Roles
 "role_super_admin": "超级管理员",
-"role_csr": "客服专员",
+"role_csr": "业务员",
 
 // Login Errors
 "err_invalid_credentials": "账号或密码错误，请重试",
@@ -273,4 +273,5 @@
         window.applyTranslations();
     }
 })();
+
 
