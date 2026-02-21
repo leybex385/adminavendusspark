@@ -3,7 +3,7 @@
     Supports Super Admin and CSR Admin Panels
 */
 (function () {
-    const adminTranslations = {
+    const translations = {
         cn: {
             // Sidebar
             "sidebar_front_page": "项目首页",
@@ -28,14 +28,65 @@
             "sidebar_livechat": "客服支持",
             "sidebar_admin_mgmt": "管理员管理",
             "sidebar_account_settings": "账号设置",
+            "sidebar_funds": "基金申购",
             "group_communication": "通讯中心",
 
             // Header/Top
             "header_logout": "退出登录",
             "header_settings": "账号设置",
             "btn_refresh": "刷新",
+            "admin_suite": "管理员后台",
+            "lbl_security": "安全性",
 
-            // General Table Headers
+            // Page Titles
+            "title_dash": "仪表盘概览",
+            "title_kyc": "实名认证审核",
+            "title_users": "客户账号管理",
+            "title_deposits": "充值明细",
+            "title_withdrawals": "提现管理中心",
+            "title_loans": "贷款申请记录",
+            "title_products": "产品配置管理",
+            "title_settings": "账户安全设置",
+            "title_admin_centers": "管理员配置中心",
+            "title_financial_overview": "财务数据概览",
+            "lbl_dashboard_summary": "仪表盘汇总",
+            "lbl_chat_support": "在线客服",
+            "lbl_user_bank_accounts": "用户银行账户",
+            "lbl_notification_center": "通知中心",
+            "title_customer_mgmt": "客户管理",
+            "title_deposit_records": "充值记录",
+            "title_withdrawal_records": "提现记录",
+            "title_loan_records": "贷款记录",
+            "lbl_stock057_terminal": "057终端状态",
+            "lbl_terminal_status": "终端状态",
+            "lbl_terminal_id": "终端ID",
+            "lbl_location": "位置",
+            "lbl_active_terminals": "活跃终端",
+            "lbl_connected": "个已连接",
+            "lbl_mumbai_hub": "孟买中心",
+            "lbl_delhi_dc": "德里数据中心",
+            "product_management": "产品管理",
+            "stock_trading": "个股交易记录",
+            "large_transactions": "大宗交易记录",
+            "otc_transactions": "OTC场外交易",
+            "ipo": "IPO申购记录",
+            "admin_management": "管理员权限管理",
+            "product_name": "产品名称",
+            "estimated_profit": "预期收益",
+            "listing_date": "上市日期",
+            "status": "状态",
+            "actions": "操作",
+            "add_product": "添加新产品",
+            "create_csr": "创建CSR账号",
+
+            // Table Headers
+            "lbl_user_id": "用户ID",
+            "lbl_account_holder": "持卡人",
+            "lbl_bank_name": "银行名称",
+            "lbl_account_no": "账号",
+            "lbl_ifsc": "IFSC码",
+            "lbl_mobile": "手机号",
+            "lbl_date_added": "添加日期",
             "th_id": "编号",
             "th_user": "用户",
             "th_name": "姓名",
@@ -52,16 +103,50 @@
             "th_credit": "信用分",
             "th_pin": "密码",
             "th_trading_status": "交易状态",
-
-            // Page Titles
-            "title_dash": "控制台",
-            "title_kyc": "实名认证审核",
-            "title_users": "客户账号管理",
-            "title_deposits": "充值明细",
-            "title_withdrawals": "提现管理中心",
-            "title_loans": "贷款申请记录",
-            "title_products": "产品配置管理",
-            "title_settings": "账户安全设置",
+            "th_full_name": "真实姓名",
+            "th_invite_code": "邀请码",
+            "th_created_date": "创建时间",
+            "th_account_no": "账号",
+            "th_bank_name": "银行名称",
+            "th_ifsc": "IFSC码",
+            "th_profit": "利润率",
+            "th_listing_date": "上市日期",
+            "th_customer_username": "客户 (用户名)",
+            "th_state": "状态",
+            "th_verify_mobile": "经认证的手机号",
+            "th_email": "邮箱",
+            "th_gender": "性别",
+            "th_dob": "出生日期",
+            "th_id_number": "证件号码",
+            "th_id_photo_front": "证件照片 (正面)",
+            "th_id_photo_back": "证件照片 (背面)",
+            "th_salesperson": "业务员",
+            "th_application_time": "申请时间",
+            "th_information": "信息",
+            "th_bank_account": "银行账户",
+            "th_loan_amount": "贷款金额",
+            "th_points": "积分",
+            "th_type": "类型",
+            "th_date": "日期",
+            "th_symbol": "标识符/代码",
+            "th_user": "所属客户",
+            "th_side": "交易侧",
+            "th_details": "交易详情",
+            "th_operate": "操作",
+            "th_asset": "交易资产",
+            "th_volume": "成交量",
+            "th_ipo_name": "申购名称",
+            "th_date": "日期",
+            "th_type": "交易类型",
+            "th_qty": "数量",
+            "th_price": "价格",
+            "th_full_name": "真实姓名",
+            "th_username": "用户名",
+            "th_password": "密码",
+            "th_invitation_code": "邀请码",
+            "th_created_date": "创建时间",
+            "lbl_qty": "数量",
+            "lbl_price": "价格",
 
             // Buttons
             "btn_edit": "编辑",
@@ -69,53 +154,244 @@
             "btn_delete": "删除",
             "btn_deactivate": "封禁账号",
             "btn_activate": "解封账号",
-            "btn_create_csr": "创建业务员账号",
-            "btn_approve": "审核通过",
-            "btn_reject": "审核拒绝",
+            "btn_create_csr": "创建CSR账号",
+            "btn_approve": "批准",
+            "btn_reject": "驳回",
             "btn_update_password": "更新登录密码",
+            "btn_submit": "提交",
+            "btn_cancel": "取消",
+            "btn_confirm": "确认",
+            "btn_done": "完成",
+            "btn_update": "更新",
+            "btn_save": "保存",
+            "btn_send": "发送",
+            "btn_add": "添加",
+            "btn_next": "下一步",
+            "btn_agree_continue": "同意并继续",
+            "btn_dont_agree": "我不同意",
+            "btn_close": "关闭",
+            "btn_submit_kyc": "提交认证",
+            "btn_back_home": "返回首页",
+            "btn_create_notification": "创建新通知",
+            "btn_update_config": "更新配置",
 
-            // Form Labels
+            // Modals
+            "modal_edit_kyc": "编辑实名信息",
+            "modal_manage_balance": "余额管理",
+            "modal_manage_withdrawal": "提现管理",
+            "modal_update_vip": "更新VIP与信用分",
+            "modal_new_notification": "创建新通知",
+            "modal_confirm_action": "确认操作",
+            "modal_success": "操作成功",
+            "modal_reset_password": "重置密码",
+
+            // Form Labels & Placeholders
+            "lbl_username": "用户名",
+            "lbl_full_name": "姓名",
+            "lbl_id_card": "身份证号",
+            "lbl_phone": "手机号",
+            "lbl_email": "邮箱",
+            "lbl_dob": "出生日期",
+            "lbl_gender": "性别",
+            "lbl_password": "密码",
+            "lbl_withdrawal_pin": "提现密码",
+            "lbl_front_id": "证件正面",
+            "lbl_back_id": "证件反面",
+            "lbl_auth_status": "认证状态",
+            "lbl_notes": "备注 (客户可见)",
+            "lbl_vip_level": "VIP等级",
+            "lbl_credit_score": "信用分 (0-100)",
+            "lbl_target_user": "目标用户",
+            "lbl_msg_title": "通知标题",
+            "lbl_msg_body": "通知内容",
+            "lbl_trans_type": "交易类型",
+            "lbl_amount_inr": "金额 (₹)",
             "lbl_current_pass": "当前密码",
             "lbl_new_pass": "新密码",
-            "lbl_confirm_pass": "确认新新密码",
+            "lbl_confirm_pass": "确认密码",
+            "lbl_basic_info": "基本信息",
+            "lbl_identification": "身份识别",
+            "lbl_id_type": "证件类型",
+            "lbl_invitation_code": "邀请码 (必填)",
+            "lbl_verify_code": "验证码",
+            "lbl_customer_fullname": "客户全名",
+            "lbl_customer_mobile": "已经过的手机号",
+            "lbl_salesperson": "业务员/销售",
+            "lbl_start_sub": "开始认购",
+            "lbl_end_sub": "结束认购",
+            "lbl_allocation_price": "配售价格",
+            "lbl_min_invest": "最低投资",
+            "lbl_max_invest": "最高投资",
+            "lbl_enable_premium": "启用高溢价产品",
+            "lbl_product_details": "产品详情",
+            "lbl_regular_ops": "在线 - 正常运营",
+            "lbl_maintenance_locked": "维护 - 已锁定",
+            "lbl_max_qty": "最大数量",
+            "lbl_limit_per_trans": "单笔交易限制",
+
+            "ph_enter_username": "输入用户名",
+            "ph_enter_fullname": "输入姓名",
+            "ph_enter_idnum": "输入身份证号",
+            "ph_enter_phone": "输入手机号",
+            "ph_enter_email": "输入邮箱",
+            "ph_enter_password": "请输入密码",
+            "ph_select_gender": "选择性别",
+            "ph_enter_pin": "用户密码 (如 123456)",
+            "ph_enter_notes": "请输入备注...",
+            "ph_enter_msg_title": "输入通知标题",
+            "ph_enter_msg_body": "输入通知内容...",
+            "ph_enter_amount": "输入金额",
+            "ph_search": "搜索...",
+            "ph_search_user": "搜索用户...",
+            "ph_select_chat": "请选择一个用户开始聊天",
+            "ph_write_message": "输入消息内容...",
+            "ph_enter_customer_fullname": "请输入客户全名",
+            "ph_enter_verified_mobile": "请输入已认证的手机号",
+            "ph_enter_business_name": "请输入业务名称",
+            "ph_not_selected": "未选择图片",
+
+            // Statuses
+            "status_active": "正常 / 活跃",
+            "status_inactive": "锁定 / 禁用",
+            "status_settled": "已完成",
+            "status_sold": "已卖出",
+            "status_holding": "持仓中",
+            "status_pending": "待审核",
+            "trans_deposit": "充值 (加钱)",
+            "trans_set": "设置余额 (修改)",
+            "lbl_total": "全部",
+            "lbl_pending_review": "待审核",
+            "lbl_not_submitted": "未提交",
+            "lbl_approved": "已批准",
+            "lbl_reject": "驳回",
+
+            // Common phrases
+            "loading_users": "正在加载用户数据...",
+            "loading_admins": "正在加载管理员...",
+            "no_data": "暂无数据",
+            "kyc_warning": "正在编辑客户实名信息：认证状态不可直接通过此处修改。",
+            "img_hint": "支持格式：JPG, PNG, WEBP, GIF, BMP, SVG, ICO, HEIC。",
+            "pin_reset_hint": "(编辑以重置用户PIN码)",
+            "agree_kyc_hint": "我同意实名认证协议",
+            "kyc_under_review": "实名认证审核中",
+            "kyc_review_hint": "您的文件已提交。合规团队正在审核——请预留最多48小时。",
+            "reset_pass_hint": "请联系我们的支持团队以验证您的身份并重置密码。",
+
+            // KPI Labels
+            "lbl_total_users": "用户总数",
+            "lbl_pending_kyc": "待审核实名",
+            "lbl_pending_trades": "待处理交易",
+            "lbl_deposits_today": "今日充值",
+            "lbl_withdrawals_today": "今日提现",
+            "lbl_new_users_today": "今日新增用户",
+            "lbl_pending_withdrawals": "待处理提现",
+            "lbl_security_alert": "安全警报",
+            "lbl_review_now": "立即查看",
+
+            // Row Actions
+            "lbl_details": "详情",
+            "lbl_approve": "通过",
+            "lbl_reject": "驳回",
+            "lbl_manage": "管理",
+            "lbl_view_details": "查看详情",
+            "lbl_delete": "删除",
+            "lbl_payment_proof": "支付凭证",
+            "lbl_unfreeze": "解冻",
+            "lbl_freeze": "冻结",
+            "lbl_frozen": "已冻结",
+            "lbl_review": "审核",
+            "lbl_balance": "余额管理",
 
             // Login Page
-            "admin_portal": "管理员后台",
-            "sign_in_desc": "请登录以继续",
-            "lbl_acc_type": "选择账户类型",
-            "lbl_username": "用户名",
-            "lbl_password": "密码",
+            "admin_portal": "管理员登录门户",
+            "sign_in_desc": "请登录您的管理账户",
+            "lbl_acc_type": "账户类型",
+            "lbl_register_now": "立即注册",
             "btn_sign_in": "登录",
-            "ph_username": "请输入管理员用户名",
-            "ph_password": "请输入密码",
             "auth_progress": "认证中...",
+            "role_super_admin": "超级管理员",
+            "role_csr": "客服管理员",
+            "err_invalid_creds": "凭据无效。请再试一次。",
+            "btn_send_otp": "发送验证码",
 
-            // Search
-            "search_placeholder": "搜索..."
-            // Login Roles
-"role_super_admin": "超级管理员",
-"role_csr": "业务员",
+            "lbl_deactivate": "停用",
+            "lbl_activate": "启用",
+            "no_subject": "无主题",
+            "status_all": "全部",
+            "status_pending_review": "待审核",
+            "status_not_submitted": "未提交",
+            "no_products_csr": "暂无产品记录，请添加产品。",
+            "no_products_admin": "数据库中未找到产品内容，请添加产品。",
+            "status_inactive": "已停用",
 
-// Login Errors
-"err_invalid_credentials": "账号或密码错误，请重试",
-"err_wrong_password": "密码错误，请重新输入",
-"err_role_mismatch": "账号角色不匹配",
-"err_inactive": "该账号已被停用，请联系管理员",
+            "err_updating": "更新时出错：",
+            "err_no_user_selected": "未选择用户。",
+            "err_credit_range": "信用分必须在0到100之间。",
+            "err_vip_negative": "VIP等级不能为负数。",
+            "err_access_denied_own_users": "访问被拒绝：您只能编辑自己的用户。",
+            "err_updating_password": "更新密码时出错：",
+            "msg_password_updated": "密码更新成功。",
+            "err_table_missing": "您的Supabase数据库中缺少 'admins' 表。请运行 'create_admins_table.sql' 中的SQL补丁来创建它。",
+            "err_invalid_id_format": "会话中的管理员ID格式无效。",
+            "err_admin_id_not_found": "会话中未找到管理员ID。请重新登录。",
+            "err_invalid_session_format": "会话格式无效。",
+            "err_session_not_found": "未找到管理员会话。请重新登录。",
+            "lbl_updating": "更新中...",
+            "err_password_6chars": "密码必须至少为6个字符。",
+            "err_passwords_no_match": "密码不匹配。",
+            "err_fill_all_pass_fields": "请填写新密码字段。",
+            "status_error": "错误",
+            "status_warning": "警告",
 
-// Login Status
-"authenticating": "正在验证身份..."
+            "err_incorrect_password": "密码错误，请重试。",
+            "err_role_mismatch": "角色不匹配。此账户注册为 {role}。",
+            "err_account_inactive": "此账户目前处于非活跃状态。请联系管理员。",
+            "err_invalid_user": "用户名无效或账户不存在。",
+            "err_db_connection": "数据库连接错误。",
+            "msg_confirm_logout": "确定要退出管理员终端吗？",
+            "lbl_confirm_logout": "确认退出",
+            "lbl_notification": "通知",
+            "msg_confirm_delete_bank": "确定要删除此银行账户吗？",
+            "lbl_delete_bank_acc": "删除银行账户",
+            "err_access_denied_bank": "访问被拒绝：银行账户属于另一位CSR的用户。",
+            "msg_confirm_delete_multiple": "确定要删除 {count} 条通知吗？",
+            "msg_delete_success_multiple": "已成功删除 {count} 条通知。",
+            "lbl_bulk_delete": "批量删除通知",
+            "err_select_one_notif": "请至少选择一条要删除的通知。",
+            "err_csr_not_allowed": "CSR角色不允许执行此操作。",
+
+            "lbl_customer_full_name": "客户全名",
+            "ph_enter_customer_full_name": "请输入客户全名",
+            "lbl_verified_mobile": "经认证的手机号",
+            "ph_enter_verified_mobile": "请输入已认证的手机号",
+            "err_access_denied": "访问被拒绝。仅限超级管理员。",
+            "err_load_fail": "加载失败。",
+            "no_csr_accounts": "暂无CSR账号记录。",
+            "no_bank_accounts": "未找到银行账号记录。",
+            "lbl_loading": "加载中...",
+
+            // Options
+            "opt_male": "男",
+            "opt_female": "女",
+            "opt_other": "其他",
+            "opt_all_users": "所有用户",
+
+            // Dashboard KPI extras
+            "status_approved": "已批准",
+            "lbl_active_products": "活跃产品"
         },
         en: {
+            // Sidebar
             "sidebar_front_page": "Home",
-            "sidebar_kyc": "Kyc Auth",
-            "sidebar_users": "Users Center",
-            "sidebar_bank_accounts": "Bank Acc.",
+            "sidebar_kyc": "KYC Auth",
+            "sidebar_users": "Users",
+            "sidebar_bank_accounts": "Bank Accounts",
             "sidebar_products": "Products",
             "sidebar_stock057": "Stock 057",
             "sidebar_financial": "Financial",
             "sidebar_deposits": "Deposits",
-            "sidebar_withdrawals": "Withdrawals",
-            "sidebar_withdrawals_req": "Withdr. Req.",
+            "sidebar_withdrawals": "Withdrawal Records",
+            "sidebar_withdrawals_req": "Withdrawal Requests",
             "sidebar_loans": "Loans",
             "sidebar_rewards": "Rewards",
             "sidebar_transactions": "Transactions",
@@ -128,12 +404,65 @@
             "sidebar_livechat": "Live Chat",
             "sidebar_admin_mgmt": "Admins",
             "sidebar_account_settings": "Settings",
+            "sidebar_funds": "Funds",
             "group_communication": "Communication",
 
+            // Header/Top
             "header_logout": "Logout",
             "header_settings": "Settings",
             "btn_refresh": "Refresh",
+            "admin_suite": "Admin Suite",
+            "lbl_security": "Security",
 
+            // Page Titles
+            "title_dash": "Dashboard Summary",
+            "title_kyc": "KYC Verifications",
+            "title_users": "Customer Management",
+            "title_deposits": "Deposit Records",
+            "title_withdrawals": "Withdrawal Center",
+            "title_loans": "Loan Application Records",
+            "title_products": "Product Management",
+            "title_settings": "Account Security",
+            "title_admin_centers": "Admin Configurations",
+            "title_financial_overview": "Financial Overview",
+            "lbl_dashboard_summary": "Dashboard Summary",
+            "lbl_chat_support": "Chat Support",
+            "lbl_user_bank_accounts": "User Bank Accounts",
+            "lbl_notification_center": "Notification Center",
+            "title_customer_mgmt": "Customer Management",
+            "title_deposit_records": "Deposit Records",
+            "title_withdrawal_records": "Withdrawal Records",
+            "title_loan_records": "Loan Records",
+            "lbl_stock057_terminal": "Stock 057 Terminal",
+            "lbl_terminal_status": "Terminal Status",
+            "lbl_terminal_id": "Terminal ID",
+            "lbl_location": "Location",
+            "lbl_active_terminals": "Active Terminals",
+            "lbl_connected": "Connected",
+            "lbl_mumbai_hub": "Mumbai Hub",
+            "lbl_delhi_dc": "Delhi DC",
+            "product_management": "Product Management",
+            "stock_trading": "Stock Trading",
+            "large_transactions": "Large Transactions",
+            "otc_transactions": "OTC Transactions",
+            "ipo": "IPO",
+            "admin_management": "Admin Management",
+            "product_name": "Product Name",
+            "estimated_profit": "Estimated Profit",
+            "listing_date": "Listing Date",
+            "status": "Status",
+            "actions": "Actions",
+            "add_product": "Add Product",
+            "create_csr": "Create CSR",
+
+            // Table Headers
+            "lbl_user_id": "User ID",
+            "lbl_account_holder": "Account Holder",
+            "lbl_bank_name": "Bank Name",
+            "lbl_account_no": "Account No.",
+            "lbl_ifsc": "IFSC",
+            "lbl_mobile": "Mobile",
+            "lbl_date_added": "Date Added",
             "th_id": "ID",
             "th_user": "User",
             "th_name": "Name",
@@ -150,67 +479,310 @@
             "th_credit": "Credit",
             "th_pin": "PIN",
             "th_trading_status": "Trading",
+            "th_full_name": "Full Name",
+            "th_invite_code": "Invite Code",
+            "th_created_date": "Created Date",
+            "th_account_no": "Account No",
+            "th_bank_name": "Bank Name",
+            "th_ifsc": "IFSC",
+            "th_profit": "Profit %",
+            "th_listing_date": "Listing Date",
+            "th_customer_username": "Customer (Username)",
+            "th_state": "Status",
+            "th_verify_mobile": "Verified Mobile",
+            "th_email": "Email",
+            "th_gender": "Gender",
+            "th_dob": "DOB",
+            "th_id_number": "ID Number",
+            "th_id_photo_front": "ID Photo (Front)",
+            "th_id_photo_back": "ID Photo (Back)",
+            "th_salesperson": "Salesperson",
+            "th_application_time": "Applied At",
+            "th_information": "Info",
+            "th_bank_account": "Bank Account",
+            "th_loan_amount": "Loan Amount",
+            "th_points": "Points",
+            "th_type": "Type",
+            "th_date": "Date",
+            "th_symbol": "Symbol",
+            "th_user": "User",
+            "th_side": "Side",
+            "th_details": "Details",
+            "th_operate": "Operate",
+            "th_asset": "Asset",
+            "th_volume": "Volume",
+            "th_ipo_name": "IPO Name",
+            "th_date": "Date",
+            "th_type": "Type",
+            "th_qty": "Qty",
+            "th_price": "Price",
+            "th_full_name": "Full Name",
+            "th_username": "Username",
+            "th_password": "Password",
+            "th_invitation_code": "Invitation Code",
+            "th_created_date": "Created Date",
+            "lbl_qty": "Qty",
+            "lbl_price": "Price",
 
-            "title_dash": "Dashboard Summary",
-            "title_kyc": "KYC Verification",
-            "title_users": "Customer Management",
-            "title_deposits": "Deposit Records",
-            "title_withdrawals": "Withdrawal Records",
-            "title_loans": "Loan Records",
-            "title_products": "Product Management",
-            "title_settings": "Account Settings",
-
+            // Buttons
             "btn_edit": "Edit",
             "btn_view": "View",
             "btn_delete": "Delete",
-            "btn_deactivate": "Block User",
-            "btn_activate": "Activate User",
+            "btn_deactivate": "Deactivate",
+            "btn_activate": "Activate",
             "btn_create_csr": "Create CSR",
             "btn_approve": "Approve",
             "btn_reject": "Reject",
             "btn_update_password": "Update Password",
+            "btn_submit": "Submit",
+            "btn_cancel": "Cancel",
+            "btn_confirm": "Confirm",
+            "btn_done": "Done",
+            "btn_update": "Update",
+            "btn_save": "Save",
+            "btn_send": "Send",
+            "btn_add": "Add New",
+            "btn_next": "Next",
+            "btn_agree_continue": "Agree & Continue",
+            "btn_dont_agree": "I don't agree",
+            "btn_close": "Close",
+            "btn_submit_kyc": "Submit KYC",
+            "btn_back_home": "Return to Home",
+            "btn_create_notification": "Create a new notification",
+            "btn_update_config": "Update Configuration",
 
+            // Modals
+            "modal_edit_kyc": "Edit KYC Information",
+            "modal_manage_balance": "Balance Management",
+            "modal_manage_withdrawal": "Withdrawal Management",
+            "modal_update_vip": "Update VIP & Credit",
+            "modal_new_notification": "New Notification",
+            "modal_confirm_action": "Confirm Action",
+            "modal_success": "Success",
+            "modal_reset_password": "Reset Password",
+
+            // Form Labels & Placeholders
+            "lbl_username": "Username",
+            "lbl_full_name": "Full Name",
+            "lbl_id_card": "ID Number",
+            "lbl_phone": "Phone Number",
+            "lbl_email": "Email Address",
+            "lbl_dob": "Date of Birth",
+            "lbl_gender": "Gender",
+            "lbl_password": "Password",
+            "lbl_withdrawal_pin": "Withdrawal PIN",
+            "lbl_front_id": "Front of Document",
+            "lbl_back_id": "Back of Document",
+            "lbl_auth_status": "Auth Status",
+            "lbl_notes": "Notes (Visible to User)",
+            "lbl_vip_level": "VIP Level",
+            "lbl_credit_score": "Credit Score (0-100)",
+            "lbl_target_user": "Target User",
+            "lbl_msg_title": "Subject",
+            "lbl_msg_body": "Content",
+            "lbl_trans_type": "Transaction Type",
+            "lbl_amount_inr": "Amount (₹)",
             "lbl_current_pass": "Current Password",
             "lbl_new_pass": "New Password",
             "lbl_confirm_pass": "Confirm Password",
+            "lbl_basic_info": "Basic Information",
+            "lbl_identification": "Identification",
+            "lbl_id_type": "ID Type",
+            "lbl_invitation_code": "Invitation Code (MANDATORY)",
+            "lbl_verify_code": "Verification Code",
+            "lbl_customer_fullname": "Customer's Full Name",
+            "lbl_customer_mobile": "Customer-Verified Mobile",
+            "lbl_salesperson": "Salesperson",
+            "lbl_start_sub": "Start Subscription",
+            "lbl_end_sub": "End Subscription",
+            "lbl_allocation_price": "Allocation Price",
+            "lbl_min_invest": "Minimum Investment",
+            "lbl_max_invest": "Maximum Investment",
+            "lbl_enable_premium": "Enable High Premium Product",
+            "lbl_product_details": "Product Details",
+            "lbl_regular_ops": "Online - Regular Operations",
+            "lbl_maintenance_locked": "Maintenance - Locked",
+            "lbl_max_qty": "Max Quantity",
+            "lbl_limit_per_trans": "Limit per Transaction",
+
+            "ph_enter_username": "Enter username",
+            "ph_enter_fullname": "Enter full name",
+            "ph_enter_idnum": "Enter ID number",
+            "ph_enter_phone": "Enter phone",
+            "ph_enter_email": "Enter email",
+            "ph_enter_password": "Enter password",
+            "ph_select_gender": "Select Gender",
+            "ph_enter_pin": "PIN (e.g. 123456)",
+            "ph_enter_notes": "Please enter a note...",
+            "ph_enter_msg_title": "Enter title",
+            "ph_enter_msg_body": "Enter message content...",
+            "ph_enter_amount": "Enter amount",
+            "ph_search": "Search...",
+            "ph_search_user": "Search user...",
+            "ph_select_chat": "Please select a user to start chatting",
+            "ph_write_message": "Write your message...",
+            "ph_enter_customer_fullname": "Please enter the customer's full name",
+            "ph_enter_verified_mobile": "Please enter verified mobile number",
+            "ph_enter_business_name": "Please enter the business name",
+            "ph_not_selected": "No image selected",
+
+            // Statuses
+            "status_active": "Active",
+            "status_inactive": "Inactive / Locked",
+            "status_settled": "Settled",
+            "status_sold": "Sold",
+            "status_holding": "Holding",
+            "status_pending": "Pending",
+            "trans_deposit": "Deposit (Add)",
+            "trans_set": "Set Balance (Edit)",
+            "lbl_total": "Total",
+            "lbl_pending_review": "Pending",
+            "lbl_not_submitted": "Not Submitted",
+            "lbl_approved": "Approved",
+            "lbl_reject": "Reject",
+
+            // Common phrases
+            "loading_users": "Loading user data...",
+            "loading_admins": "Loading admin accounts...",
+            "no_data": "No data found",
+            "kyc_warning": "Editing real-name info: Auth status cannot be changed here directly.",
+            "img_hint": "Formats: JPG, PNG, WEBP, GIF, BMP, SVG, ICO, HEIC.",
+            "pin_reset_hint": "(Edit to reset user PIN)",
+            "agree_kyc_hint": "I agree to the KYC agreement",
+            "kyc_under_review": "KYC Under Review",
+            "kyc_review_hint": "Your documents have been submitted. Our compliance team is reviewing them — please allow up to 48 hours.",
+            "reset_pass_hint": "Please contact our support team to verify your identity and reset your password.",
+
+            // KPI Labels
+            "lbl_total_users": "TOTAL USERS",
+            "lbl_pending_kyc": "PENDING KYC",
+            "lbl_pending_trades": "PENDING TRADES",
+            "lbl_deposits_today": "DEPOSITS TODAY",
+            "lbl_withdrawals_today": "WITHDRAWALS TODAY",
+            "lbl_new_users_today": "NEW USERS TODAY",
+            "lbl_pending_withdrawals": "PENDING WITHDRAWALS",
+            "lbl_security_alert": "Security Alert",
+            "lbl_review_now": "Review Now",
+
+            // Row Actions
+            "lbl_details": "Details",
+            "lbl_approve": "Approve",
+            "lbl_reject": "Reject",
+            "lbl_manage": "Manage",
+            "lbl_view_details": "View Details",
+            "lbl_delete": "Delete",
+            "lbl_payment_proof": "Payment Proof",
+            "lbl_unfreeze": "Unfreeze",
+            "lbl_freeze": "Freeze",
+            "lbl_frozen": "FROZEN",
+            "lbl_review": "Review",
+            "lbl_balance": "Balance",
 
             // Login Page
-            "admin_portal": "Admin Portal",
-            "sign_in_desc": "Please sign in to continue",
-            "lbl_acc_type": "Select Account Type",
-            "lbl_username": "Username",
-            "lbl_password": "Password",
+            "admin_portal": "Admin Login Portal",
+            "sign_in_desc": "Please sign in to your dashboard",
+            "lbl_acc_type": "Account Type",
+            "lbl_register_now": "Register Now",
             "btn_sign_in": "Sign In",
-            "ph_username": "Enter admin username",
-            "ph_password": "Enter password",
             "auth_progress": "Authenticating...",
-"role_super_admin": "Super Admin",
-"role_csr": "CSR",
+            "role_super_admin": "Super Admin",
+            "role_csr": "CSR",
+            "err_invalid_creds": "Invalid credentials. Please try again.",
+            "btn_send_otp": "Send OTP",
 
-"err_invalid_credentials": "Invalid username or password.",
-"err_wrong_password": "Incorrect password. Please try again.",
-"err_role_mismatch": "Account role mismatch.",
-"err_inactive": "This account is inactive. Please contact administrator.",
+            "lbl_deactivate": "Deactivate",
+            "lbl_activate": "Activate",
+            "no_subject": "No Subject",
+            "status_all": "All",
+            "status_pending_review": "Pending Review",
+            "status_not_submitted": "Not Submitted",
+            "no_products_csr": "No products created yet. Add one to see it here.",
+            "no_products_admin": "No products found in database. Add one to see it here.",
+            "status_inactive": "Inactive",
 
-"authenticating": "Authenticating..."
-            "search_placeholder": "Search..."
+            "err_updating": "Error updating: ",
+            "err_no_user_selected": "No user selected.",
+            "err_credit_range": "Credit Score must be between 0 and 100.",
+            "err_vip_negative": "VIP Level cannot be negative.",
+            "err_access_denied_own_users": "Access Denied: You can only edit your own users.",
+            "err_updating_password": "Error updating password: ",
+            "msg_password_updated": "Password updated successfully.",
+            "err_table_missing": "The 'admins' table is missing in your Supabase database. Please run the SQL patch in 'create_admins_table.sql' to create it.",
+            "err_invalid_id_format": "Invalid admin ID format in session.",
+            "err_admin_id_not_found": "Admin ID not found in session. Please login again.",
+            "err_invalid_session_format": "Invalid session format.",
+            "err_session_not_found": "Admin session not found. Please login again.",
+            "lbl_updating": "Updating...",
+            "err_password_6chars": "Password must be at least 6 characters.",
+            "err_passwords_no_match": "Passwords do not match.",
+            "err_fill_all_pass_fields": "Please fill in the new password fields.",
+            "status_error": "Error",
+            "status_warning": "Warning",
+
+            "err_incorrect_password": "Incorrect password. Please try again.",
+            "err_role_mismatch": "Role mismatch. This account is registered as {role}.",
+            "err_account_inactive": "This account is currently INACTIVE. Please contact the administrator.",
+            "err_invalid_user": "Invalid username or account does not exist.",
+            "err_db_connection": "Database connection error.",
+            "msg_confirm_logout": "Logout from admin terminal?",
+            "lbl_confirm_logout": "Confirm Logout",
+            "lbl_notification": "Notification",
+            "msg_confirm_delete_bank": "Are you sure you want to delete this bank account?",
+            "lbl_delete_bank_acc": "Delete Bank Account",
+            "err_access_denied_bank": "Access Denied: Bank account belongs to another CSR's user.",
+            "msg_confirm_delete_multiple": "Are you sure you want to delete {count} notifications?",
+            "msg_delete_success_multiple": "Successfully deleted {count} notifications.",
+            "lbl_bulk_delete": "Bulk Delete Notifications",
+            "err_select_one_notif": "Please select at least one notification to delete.",
+            "err_csr_not_allowed": "CSR role not allowed to perform this action.",
+
+            "lbl_customer_full_name": "Customer's Full Name",
+            "ph_enter_customer_full_name": "Please enter the customer's full name",
+            "lbl_verified_mobile": "Verified Mobile Number",
+            "ph_enter_verified_mobile": "Please enter verified mobile number",
+            "err_access_denied": "Access Denied. Super Admin only.",
+            "err_load_fail": "Error loading data.",
+            "no_csr_accounts": "No CSR accounts created yet.",
+            "no_bank_accounts": "No bank accounts found.",
+            "lbl_loading": "Loading...",
+
+            // Options
+            "opt_male": "Male",
+            "opt_female": "Female",
+            "opt_other": "Other",
+            "opt_all_users": "All Users",
+
+            // Dashboard KPI extras
+            "status_approved": "Approved",
+            "lbl_active_products": "ACTIVE PRODUCTS"
         }
     };
 
-    window.applyTranslations = function (lang) {
+    window.applyLanguage = function (lang) {
         lang = lang || localStorage.getItem('admin_lang') || 'cn';
         localStorage.setItem('admin_lang', lang);
 
-        const dict = adminTranslations[lang] || adminTranslations['cn'];
+        const dict = translations[lang];
 
-        document.querySelectorAll('[data-key]').forEach(el => {
-            const key = el.getAttribute('data-key');
+        // Process elements with data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
             if (dict[key]) {
-                if (el.tagName === 'INPUT' && (el.placeholder || el.getAttribute('placeholder'))) {
-                    el.placeholder = dict[key];
+                // If it's a placeholder-only element
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    if (el.placeholder || el.getAttribute('placeholder')) {
+                        el.placeholder = dict[key];
+                    } else {
+                        el.value = dict[key];
+                    }
                 } else if (el.tagName === 'SELECT') {
-                    // Skip
+                    // Handle choices if needed
+                    Array.from(el.options).forEach(opt => {
+                        const optKey = opt.getAttribute('data-i18n');
+                        if (optKey && dict[optKey]) opt.text = dict[optKey];
+                    });
                 } else {
+                    // Handle nodes with icons
                     const icons = el.querySelectorAll('i[data-lucide], svg');
                     if (icons.length > 0) {
                         const iconHtml = Array.from(icons).map(i => i.outerHTML).join('');
@@ -222,26 +794,25 @@
             }
         });
 
-        // Dynamic Tab Support for admin_customer_management.html
+        // Also process old data-key for backward compatibility if any
+        document.querySelectorAll('[data-key]').forEach(el => {
+            const key = el.getAttribute('data-key');
+            if (dict[key]) {
+                if (el.tagName === 'INPUT') el.placeholder = dict[key];
+                else el.innerText = dict[key];
+            }
+        });
+
+        // Update Dynamic Tabs for admin suite
         if (window.PAGE_NAMES) {
             const pageKeys = {
-                'home': 'sidebar_front_page',
-                'kyc': 'sidebar_kyc',
-                'users': 'sidebar_users',
-                'bank_accounts': 'sidebar_bank_accounts',
-                'products': 'sidebar_products',
-                'stock057': 'sidebar_stock057',
-                'deposits': 'sidebar_deposits',
-                'withdrawals': 'sidebar_withdrawals_req',
-                'loans': 'sidebar_loans',
-                'rewards': 'sidebar_rewards',
-                'stock': 'sidebar_stock',
-                'bulk': 'sidebar_bulk',
-                'otc': 'sidebar_otc',
-                'ipo': 'sidebar_ipo',
-                'messages': 'sidebar_notifications',
-                'livechat': 'sidebar_livechat',
-                'admin_mgmt': 'sidebar_admin_mgmt'
+                'home': 'sidebar_front_page', 'kyc': 'sidebar_kyc', 'users': 'sidebar_users',
+                'bank_accounts': 'sidebar_bank_accounts', 'products': 'sidebar_products',
+                'stock057': 'sidebar_stock057', 'deposits': 'sidebar_deposits',
+                'withdrawals': 'sidebar_withdrawals_req', 'loans': 'sidebar_loans',
+                'rewards': 'sidebar_rewards', 'stock': 'sidebar_stock', 'bulk': 'sidebar_bulk',
+                'otc': 'sidebar_otc', 'ipo': 'sidebar_ipo', 'messages': 'sidebar_notifications',
+                'livechat': 'sidebar_livechat', 'admin_mgmt': 'sidebar_admin_mgmt'
             };
             for (let p in pageKeys) {
                 if (dict[pageKeys[p]]) window.PAGE_NAMES[p] = dict[pageKeys[p]];
@@ -253,25 +824,29 @@
             }
         }
 
-        // Toggle active button state
+        // Active button styles
         document.querySelectorAll('.lang-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
         });
 
-        // Optional: Re-create icons to ensure lucide works after innerHTML change
         if (window.lucide) window.lucide.createIcons();
     };
 
     window.switchLang = function (lang) {
-        window.applyTranslations(lang);
+        window.applyLanguage(lang);
     };
 
-    // Auto-run on load
+    window.i18n = function (key, defaultVal) {
+        const lang = localStorage.getItem('admin_lang') || 'cn';
+        const dict = translations[lang];
+        return (dict && dict[key]) || defaultVal || key;
+    };
+
+    // Initialize
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.applyTranslations());
+        document.addEventListener('DOMContentLoaded', () => window.applyLanguage());
     } else {
-        window.applyTranslations();
+        window.applyLanguage();
     }
 })();
-
 
