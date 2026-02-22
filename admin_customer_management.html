@@ -2099,6 +2099,35 @@
 
             <!-- Page: Loans -->
             <div id="pageLoans" class="vsl-page" style="display:none;">
+                <!-- User Eligibility Control Section -->
+                <div class="section-card" style="margin-bottom: 25px; border-left: 4px solid #1e56a0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="margin:0; font-size:1.1rem; color:#1e293b;" data-i18n="lbl_loan_eligibility_mgmt">
+                            Loan Eligibility Management</h3>
+                    </div>
+                    <div style="display:flex; gap:12px; margin-bottom:15px;">
+                        <input type="text" id="loan_user_search" class="vsl-input"
+                            placeholder="Search user by mobile or username..." style="flex:1;"
+                            onkeyup="filterLoanEligibleUsers()" data-i18n="ph_search_user">
+                    </div>
+                    <div class="vsl-table-wrap"
+                        style="max-height: 250px; overflow-y:auto; border:1px solid #f1f5f9; border-radius:8px;">
+                        <table class="vsl-table" style="width:100%; border-collapse:collapse;">
+                            <thead style="position:sticky; top:0; background:#f8fafc; z-index:10;">
+                                <tr>
+                                    <th style="padding:10px; font-size:0.7rem;" data-i18n="th_user">User</th>
+                                    <th style="padding:10px; font-size:0.7rem;" data-i18n="th_loan_access">Loan Access
+                                    </th>
+                                    <th style="padding:10px; font-size:0.7rem;" data-i18n="th_operate">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loanEligibleUsersList">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="section-card">
                     <h3 data-i18n="sidebar_loans">Loan records</h3>
                     <div class="vsl-table-wrap">
@@ -2120,6 +2149,9 @@
                                     <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
                                         data-i18n="th_time">
                                         Time</th>
+                                    <th style="padding:12px; font-size:0.75rem; color:#64748b; border-bottom:2px solid #e2e8f0;"
+                                        data-i18n="th_operate">
+                                        Operate</th>
                                 </tr>
                             </thead>
                             <tbody id="loanList">
@@ -2230,10 +2262,11 @@
                             <thead>
                                 <th data-i18n="th_ipo_name">IPO Name</th>
                                 <th data-i18n="th_user">User</th>
+                                <th data-i18n="th_requested">Requested</th>
+                                <th data-i18n="th_approved">Approved</th>
                                 <th data-i18n="th_status">Status</th>
                                 <th data-i18n="th_date">Date</th>
                                 <th data-i18n="th_operate">Operate</th>
-                                </tr>
                             </thead>
                             <tbody id="ipoList">
                                 <tr>
@@ -2258,11 +2291,10 @@
                             <thead>
                                 <th data-i18n="th_symbol">Symbol</th>
                                 <th data-i18n="th_user">User</th>
-                                <th data-i18n="th_type">Type</th>
-                                <th data-i18n="th_details">Details</th>
+                                <th data-i18n="th_requested">Requested</th>
+                                <th data-i18n="th_approved">Approved</th>
                                 <th data-i18n="th_status">Status</th>
                                 <th data-i18n="th_operate">Operate</th>
-                                </tr>
                             </thead>
                             <tbody id="otcList">
                                 <tr>
@@ -2291,6 +2323,7 @@
                             <thead>
                                 <tr>
                                     <th data-i18n="product_name">Product Name</th>
+                                    <th data-i18n="th_shares">Shares (Total/Avail)</th>
                                     <th data-i18n="estimated_profit">Estimated Profit</th>
                                     <th data-i18n="listing_date">Listing Date</th>
                                     <th data-i18n="status">Status</th>
@@ -2581,6 +2614,146 @@
         </div>
     </div>
 
+    <!-- OPERATE TRADE MODAL (IPO & OTC) -->
+    <div id="operateTradeModal" class="kyc-modal-overlay">
+        <!-- ... existing operateTradeModal content ... -->
+        <div class="kyc-modal-card" style="max-width: 450px;">
+            <div class="kyc-modal-header">
+                <span id="otm_title" data-i18n="modal_operate_trade">${window.i18n('modal_operate_trade', 'Operate
+                    Trade')}</span>
+                <i data-lucide="x" style="cursor:pointer" onclick="closeTradeOperateModal()"></i>
+            </div>
+            <div class="kyc-modal-body">
+                <input type="hidden" id="otm_trade_id">
+                <div
+                    style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:15px; font-size:0.85rem; display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:#64748b;" data-i18n="lbl_user">User</span>
+                        <span id="otm_user_info" style="font-weight:700;">-</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:#64748b;" data-i18n="product_name">Product Name</span>
+                        <span id="otm_prod_info" style="font-weight:700;">-</span>
+                    </div>
+                    <div id="otm_req_group" style="display:flex; justify-content:space-between;">
+                        <span style="color:#64748b;" data-i18n="th_requested">Requested</span>
+                        <span id="otm_req_qty" style="font-weight:700;">0</span>
+                    </div>
+                    <div
+                        style="display:flex; justify-content:space-between; border-top:1px solid #e2e8f0; padding-top:8px;">
+                        <span style="color:#64748b;" data-i18n="lbl_balance">Wallet Balance</span>
+                        <span id="otm_user_balance" style="font-weight:700; color:#10b981;">₹0.00</span>
+                    </div>
+                    <div id="otm_shares_group" style="display:flex; justify-content:space-between;">
+                        <span style="color:#64748b;" data-i18n="th_shares">Available Shares</span>
+                        <span id="otm_avail_shares" style="font-weight:700;">0</span>
+                    </div>
+                </div>
+
+                <div class="kyc-form-group">
+                    <label style="font-weight:700; font-size:0.85rem; color:#1e293b;" data-i18n="th_approved">Approved
+                        Quantity</label>
+                    <input type="number" id="otm_approved_qty" class="kyc-input"
+                        placeholder="Enter quantity to allocate">
+                </div>
+            </div>
+            <div class="kyc-modal-footer" style="display:flex; gap:12px;">
+                <button class="vsl-btn green" style="flex:1;" onclick="handleTradeFromOperateModal('Settled')"
+                    data-i18n="lbl_approve">Approve</button>
+                <button class="vsl-btn" style="flex:1; background:#fee2e2; color:#991b1b; border:none;"
+                    onclick="handleTradeFromOperateModal('Rejected')" data-i18n="lbl_reject">Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPERATE LOAN MODAL -->
+    <div id="operateLoanModal" class="kyc-modal-overlay">
+        <div class="kyc-modal-card" style="max-width: 500px;">
+            <div class="kyc-modal-header">
+                <span id="olm_title" data-i18n="modal_operate_loan">${window.i18n('modal_operate_loan', 'Operate Loan
+                    Application')}</span>
+                <i data-lucide="x" style="cursor:pointer" onclick="closeLoanOperateModal()"></i>
+            </div>
+            <div class="kyc-modal-body">
+                <input type="hidden" id="olm_loan_id">
+                <input type="hidden" id="olm_user_id">
+
+                <div
+                    style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:20px; font-size:0.9rem; display:flex; flex-direction:column; gap:10px; border:1px solid #e2e8f0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#64748b;" data-i18n="lbl_user">User</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="olm_user_info" style="font-weight:700; color:#1e293b;">-</span>
+                            <button class="vsl-btn"
+                                style="padding:2px 8px; font-size:0.65rem; background:#eff6ff; color:#3b82f6; border:1px solid #bfdbfe;"
+                                onclick="viewUserInfoFromLoan()" data-i18n="lbl_view_info">View Info</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#64748b;" data-key="th_credit">Credit Score</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="olm_credit_score" style="font-weight:700; color:#1e293b;">100</span>
+                            <button class="vsl-btn"
+                                style="padding:2px 8px; font-size:0.65rem; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0;"
+                                onclick="viewCreditInfoFromLoan()" data-i18n="lbl_view_credit">View Credit</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#64748b;" data-i18n="th_requested">Requested Amount</span>
+                        <span id="olm_req_amount" style="font-weight:700; color:#1e293b;">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="kyc-grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="kyc-form-group">
+                        <label style="font-weight:600;" data-i18n="th_approved">Approved Amount (₹)</label>
+                        <input type="number" id="olm_approved_amount" class="kyc-input" placeholder="0.00">
+                    </div>
+                    <div class="kyc-form-group">
+                        <label style="font-weight:600;" data-i18n="th_status">Status</label>
+                        <select id="olm_status" class="kyc-input">
+                            <option value="PENDING" data-i18n="status_pending">PENDING</option>
+                            <option value="APPROVED" data-i18n="status_approved">APPROVED</option>
+                            <option value="REJECTED" data-i18n="status_rejected">REJECTED</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="kyc-form-group" style="margin-top:15px;">
+                    <label style="font-weight:600;" data-i18n="th_terms">Repayment Terms</label>
+                    <textarea id="olm_terms" class="kyc-input" rows="2"
+                        placeholder="e.g. 12 Months, 5% Interest"></textarea>
+                </div>
+
+                <div class="kyc-form-group"
+                    style="margin-top:15px; background: #fff7ed; padding: 12px; border-radius: 8px; border: 1px solid #ffedd5;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; color:#9a3412; font-size:0.85rem;"
+                                data-i18n="lbl_loan_eligibility">Loan Eligibility</div>
+                            <div style="font-size:0.75rem; color:#c2410c;" data-i18n="lbl_loan_elig_desc">Enable or
+                                disable user's ability to apply for loans</div>
+                        </div>
+                        <div style="transform: scale(1.2);">
+                            <input type="checkbox" id="olm_eligibility" style="cursor:pointer;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kyc-form-group" style="margin-top:15px;">
+                    <label style="font-weight:600;" data-i18n="lbl_admin_note">Admin Internal Note</label>
+                    <input type="text" id="olm_admin_note" class="kyc-input" placeholder="Reason for adjustment/terms">
+                </div>
+            </div>
+            <div class="kyc-modal-footer" style="display:flex; gap:12px;">
+                <button class="vsl-btn-primary" style="flex:1; background:#1e56a0;" onclick="submitLoanOperation()"
+                    data-i18n="btn_save_changes">Save Changes</button>
+                <button class="vsl-btn" style="flex:1; background:#f1f5f9; color:#64748b; border:none;"
+                    onclick="closeLoanOperateModal()" data-i18n="btn_cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MANUAL WITHDRAWAL MODAL -->
     <div id="withdrawalModal" class="kyc-modal-overlay">
         <div class="kyc-modal-card" style="height:auto; max-width: 400px;">
@@ -2652,21 +2825,26 @@
 
     <script>
         // Updated showConfirm with dynamic title
-        function showConfirm(msg, onConfirm, title = "Confirm Action") {
+        function showConfirm(msg, onConfirm, title = "modal_confirm_action", btnType = "btn_confirm") {
             const modal = document.getElementById('confirmModal');
             const msgEl = document.getElementById('confirmModalMsg');
             const titleEl = document.getElementById('confirmModalTitle');
-            const deleteBtn = document.getElementById('confirmDeleteBtn');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
 
-            if (titleEl) titleEl.textContent = title;
-            if (msgEl) msgEl.textContent = msg;
+            if (titleEl) {
+                titleEl.textContent = window.i18n(title, title);
+                titleEl.setAttribute('data-i18n', title);
+            }
+            if (msgEl) {
+                msgEl.textContent = window.i18n(msg, msg);
+                // We don't set data-i18n here because msg might be dynamic text with values
+            }
+            if (confirmBtn) {
+                confirmBtn.textContent = window.i18n(btnType, 'Confirm');
+                confirmBtn.setAttribute('data-i18n', btnType);
+            }
 
-            // Default to Confirm button text, but we could make this dynamic too if needed
-            // For now, "Confirm" is generic enough, or "Delete" for delete actions could be passed.
-            // The user asked for "Delete confirmation must remain separate and show delete message only"
-            // So we can pass "Delete User" as title.
-
-            deleteBtn.onclick = () => {
+            confirmBtn.onclick = () => {
                 closeConfirmModal();
                 onConfirm();
             };
@@ -2732,10 +2910,10 @@
             <div class="confirm-modal-icon-box">
                 <i id="alertIcon" data-lucide="info" size="44"></i>
             </div>
-            <h3 id="alertTitle" class="confirm-modal-title">Notification</h3>
+            <h3 id="alertTitle" class="confirm-modal-title" data-i18n="lbl_notification">${window.i18n('lbl_notification', 'Notification')}</h3>
             <p id="alertMsg" class="confirm-modal-message"></p>
             <div class="confirm-modal-footer" style="justify-content: center;">
-                <button class="confirm-modal-btn delete" id="alertBtn" onclick="closeAlertModal()" style="background:var(--primary-blue); width: 100%; border:none;">OK</button>
+                <button class="confirm-modal-btn delete" id="alertBtn" onclick="closeAlertModal()" style="background:var(--primary-blue); width: 100%; border:none;" data-i18n="btn_ok">${window.i18n('btn_ok', 'OK')}</button>
             </div>
         </div>`;
                 document.body.appendChild(div);
@@ -2953,7 +3131,7 @@
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             const isCsr = auth.role === 'csr';
 
-            showConfirm("Are you sure you want to soft-delete this user? (Action cannot be undone via this panel)", async () => {
+            showConfirm("msg_confirm_delete_user", async () => {
                 showLoader(true);
                 const client = DB.getClient();
 
@@ -2992,7 +3170,7 @@
                 } else {
                     showAlert('error', "Failed to delete user: " + (res.error?.message || "Unknown error"));
                 }
-            }, "Delete User");
+            }, "lbl_delete_user", "btn_delete");
         }
 
         async function init() {
@@ -3020,7 +3198,7 @@
             };
 
             // 1. Fetch Users (Filtered if CSR)
-            let userQuery = client.from('users').select('id,mobile,email,dob,gender,username,full_name,id_number,balance,vip,credit_score,withdrawal_pin,created_at,kyc,trading_frozen,csr_id,invitation_code').or('is_deleted.is.null,is_deleted.eq.false').order('created_at', { ascending: false });
+            let userQuery = client.from('users').select('id,mobile,email,dob,gender,username,full_name,id_number,balance,vip,credit_score,withdrawal_pin,created_at,kyc,trading_frozen,csr_id,invitation_code,loan_enabled').or('is_deleted.is.null,is_deleted.eq.false').order('created_at', { ascending: false });
 
             if (isCsr) {
                 const invCode = auth.invitation_code;
@@ -3042,21 +3220,22 @@
             // If CSR and no users assigned, return empty states immediately
             if (isCsr && userIds.length === 0) {
                 console.warn("CSR has no assigned users. Rendering blank state.");
-                renderDashboard([], [], [], [], [], [], [], {});
+                renderDashboard([], [], [], [], [], [], [], [], {});
                 showLoader(false);
                 return;
             }
 
             // 2. Fetch other modules (Filtered if CSR)
-            const [ks, w, d, tStock, tOtc, tIpo, l, m] = await Promise.all([
+            const [ks, w, d, tStock, tOtc, tIpo, l, m, r] = await Promise.all([
                 fetchSafe('kyc_submissions', (isCsr ? client.from('kyc_submissions').select('*').in('user_id', userIds) : client.from('kyc_submissions').select('id,user_id,id_front_url,id_back_url,status'))),
                 fetchSafe('withdrawals', (isCsr ? client.from('withdrawals').select('*').in('user_id', userIds) : client.from('withdrawals').select('*')).order('created_at', { ascending: false }).limit(100)),
                 fetchSafe('deposits', (isCsr ? client.from('deposits').select('*').in('user_id', userIds) : client.from('deposits').select('*')).order('created_at', { ascending: false }).limit(100)),
                 fetchSafe('trades_stock', (isCsr ? client.from('trades').select('*').eq('type', 'stock').in('user_id', userIds) : client.from('trades').select('*').eq('type', 'stock')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
                 fetchSafe('trades_otc', (isCsr ? client.from('trades').select('*').eq('type', 'otc').in('user_id', userIds) : client.from('trades').select('*').eq('type', 'otc')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
                 fetchSafe('trades_ipo', (isCsr ? client.from('trades').select('*').eq('type', 'ipo').in('user_id', userIds) : client.from('trades').select('*').eq('type', 'ipo')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
-                (isCsr ? fetchSafe('loans', client.from('loans').select('*, users!inner(*)').eq('users.csr_id', csrId)) : window.DB.getAllLoans()),
-                fetchSafe('messages', (isCsr ? client.from('messages').select('*').in('user_id', userIds) : client.from('messages').select('*')).order('created_at', { ascending: false }).limit(100))
+                window.DB.getAllLoans(),
+                fetchSafe('messages', (isCsr ? client.from('messages').select('*').in('user_id', userIds) : client.from('messages').select('*')).order('created_at', { ascending: false }).limit(100)),
+                fetchSafe('rewards', (isCsr ? client.from('rewards').select('*').in('user_id', userIds) : client.from('rewards').select('*')).order('created_at', { ascending: false }).limit(100))
             ]);
 
             // Combine trades
@@ -3068,7 +3247,7 @@
                 kpis = await fetchDashboardKPIs(client, isCsr ? userIds : null);
             } catch (e) { console.error("KPI Fetch Failed", e); }
 
-            renderDashboard(u || [], ks || [], w || [], d || [], allTrades, l || [], m || [], kpis);
+            renderDashboard(u || [], ks || [], w || [], d || [], allTrades, l || [], m || [], r || [], kpis);
             showLoader(false);
         }
 
@@ -3100,7 +3279,7 @@
 
                         if (!hasCsrIdMatch && !hasInvCodeMatch) {
                             showLoader(false);
-                            showAlert('error', "Access Denied: You do not manage this trade.");
+                            showAlert('error', "Unauthorized Scope Violation");
                             return;
                         }
                     }
@@ -3124,9 +3303,25 @@
         }
 
         async function deleteOtcTrade(id) {
+            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            const isCsr = auth.role === 'csr';
             showConfirm("Delete this OTC transaction record?", async () => {
                 showLoader(true);
-                // Reusing deleteStockTrade from DB as it targets 'trades' table generically
+                const client = DB.getClient();
+                if (isCsr) {
+                    const { data: t } = await client.from('trades').select('user_id').eq('id', id).single();
+                    if (t) {
+                        const { data: u } = await client.from('users').select('csr_id, invitation_code').eq('id', t.user_id).single();
+                        const hasCsrIdMatch = u?.csr_id === auth.id;
+                        const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
+
+                        if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                            showLoader(false);
+                            showAlert('error', "Unauthorized Scope Violation");
+                            return;
+                        }
+                    }
+                }
                 const res = await window.DB.deleteStockTrade(id);
                 showLoader(false);
                 if (res.success) {
@@ -3145,26 +3340,90 @@
             });
         }
 
-        async function confirmOtcAction(id, status, symbol, qty) {
-            const action = status === 'Settled' ? 'APPROVE' : 'REJECT';
-            const msg = `Are you sure you want to ${action} this OTC transaction (${symbol}, Qty: ${qty})?`;
+        async function openTradeOperateModal(tradeId) {
+            showLoader(true);
+            const client = DB.getClient();
+            try {
+                const { data: trade, error } = await client
+                    .from('trades')
+                    .select('*, users!inner(id, username, mobile, balance, csr_id, invitation_code)')
+                    .eq('id', tradeId)
+                    .single();
 
-            showConfirm(msg, async () => {
-                await updateTradeStatus(id, status);
-            }, "Confirm OTC Action");
+                if (error || !trade) throw new Error("Trade not found");
+
+                // Populate Modal
+                document.getElementById('otm_trade_id').value = tradeId;
+                document.getElementById('otm_title').innerText = (trade.type || '').toUpperCase() + " Operation";
+                document.getElementById('otm_user_info').innerText = `${trade.users.mobile || trade.users.username || 'User'} (ID: ${trade.users.id})`;
+                document.getElementById('otm_prod_info').innerText = `${trade.name} (${trade.symbol})`;
+                document.getElementById('otm_req_qty').innerText = trade.requested_quantity || trade.quantity || 0;
+                document.getElementById('otm_user_balance').innerText = `₹${parseFloat(trade.users.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                document.getElementById('otm_approved_qty').value = trade.requested_quantity || trade.quantity || 1;
+
+                // Fetch Available Shares
+                let { data: product } = await client.from('products').select('available_shares').eq('symbol', trade.symbol).single();
+                if (!product) {
+                    const searchName = trade.name.split(' (')[0].trim();
+                    const { data: prods } = await client.from('products').select('available_shares').or(`name.eq."${trade.name}",name.eq."${searchName}"`);
+                    if (prods && prods.length > 0) product = prods[0];
+                }
+
+                const availShares = product ? (product.available_shares || 0) : 'N/A';
+                document.getElementById('otm_avail_shares').innerText = availShares.toLocaleString();
+                document.getElementById('otm_shares_group').style.display = product ? 'flex' : 'none';
+
+                document.getElementById('operateTradeModal').style.display = 'flex';
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                showAlert('error', err.message);
+            } finally {
+                showLoader(false);
+            }
         }
 
-        async function confirmIpoAction(id, status, name, userContact) {
-            const action = status === 'Settled' ? 'APPROVE' : 'REJECT';
-            const msg = `Are you sure you want to ${action} IPO (${name}) for user ${userContact}?`;
-            showConfirm(msg, async () => {
-                await updateTradeStatus(id, status);
-            }, "Confirm IPO Action");
+        function closeTradeOperateModal() {
+            document.getElementById('operateTradeModal').style.display = 'none';
+        }
+
+        async function handleTradeFromOperateModal(status) {
+            const tradeId = document.getElementById('otm_trade_id').value;
+            const appQty = parseFloat(document.getElementById('otm_approved_qty').value);
+
+            if (status === 'Settled') {
+                if (isNaN(appQty) || appQty <= 0) {
+                    return showAlert('warning', "Please enter a valid approved quantity.");
+                }
+                await updateTradeStatus(tradeId, 'Settled', appQty);
+            } else {
+                showConfirm("Are you sure you want to REJECT this trade?", async () => {
+                    await updateTradeStatus(tradeId, 'Rejected');
+                }, "Confirm Reject");
+            }
+            closeTradeOperateModal();
         }
 
         async function deleteLargeTransaction(id) {
+            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            const isCsr = auth.role === 'csr';
             showConfirm("Delete this transaction record?", async () => {
                 showLoader(true);
+                const client = DB.getClient();
+                if (isCsr) {
+                    const { data: t } = await client.from('trades').select('user_id').eq('id', id).single();
+                    if (t) {
+                        const { data: u } = await client.from('users').select('csr_id, invitation_code').eq('id', t.user_id).single();
+                        const hasCsrIdMatch = u?.csr_id === auth.id;
+                        const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
+
+                        if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                            showLoader(false);
+                            showAlert('error', "Unauthorized Scope Violation");
+                            return;
+                        }
+                    }
+                }
                 const res = await window.DB.deleteLargeTransaction(id);
                 showLoader(false);
                 if (res.success) {
@@ -3184,8 +3443,25 @@
         }
 
         async function deleteIPORecord(id) {
+            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            const isCsr = auth.role === 'csr';
             showConfirm("Delete this IPO subscription record?", async () => {
                 showLoader(true);
+                const client = DB.getClient();
+                if (isCsr) {
+                    const { data: t } = await client.from('trades').select('user_id').eq('id', id).single();
+                    if (t) {
+                        const { data: u } = await client.from('users').select('csr_id, invitation_code').eq('id', t.user_id).single();
+                        const hasCsrIdMatch = u?.csr_id === auth.id;
+                        const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
+
+                        if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                            showLoader(false);
+                            showAlert('error', "Unauthorized Scope Violation");
+                            return;
+                        }
+                    }
+                }
                 const res = await window.DB.deleteIPORecord(id);
                 showLoader(false);
                 if (res.success) {
@@ -3269,30 +3545,85 @@
                 failedLogins = riskUsers || 0;
             } catch (e) { }
 
+            // 7. Total System Deposits (Confirmed)
+            let totDepQuery = client.from('deposits').select('amount').or('status.eq.Approved,status.eq.Completed,status.eq.approved,status.eq.completed');
+            if (userIds) totDepQuery = totDepQuery.in('user_id', userIds);
+            const { data: allDep } = await totDepQuery;
+            const totalDeposits = allDep?.reduce((s, x) => s + (parseFloat(x.amount) || 0), 0) || 0;
+
+            // 8. Total System Withdrawals (Confirmed)
+            let totWdQuery = client.from('withdrawals').select('amount').or('status.eq.Approved,status.eq.Completed,status.eq.approved,status.eq.completed');
+            if (userIds) totWdQuery = totWdQuery.in('user_id', userIds);
+            const { data: allWd } = await totWdQuery;
+            const totalWithdrawals = allWd?.reduce((s, x) => s + (parseFloat(x.amount) || 0), 0) || 0;
+
             return {
                 activeProd: activeProd || 0,
                 totalDepToday,
                 totalWdToday,
                 newUsersToday: newUsersToday || 0,
                 pendingWd: pendingWd || 0,
-                failedLogins
+                failedLogins,
+                totalDeposits,
+                totalWithdrawals
             };
         }
 
-        function renderDashboard(users, kyc, withdrawals, deposits, tradesData, loans, messages, stats = {}) {
+        function renderDashboard(users, kyc, withdrawals, deposits, tradesData, loans, messages, rewards, stats = {}) {
             // Process Users
             allUsers = users;
+            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            const isCsr = auth.role === 'csr';
             // Create user lookup map for fast in-memory joins
             const userMap = {};
             allUsers.forEach(u => {
-                userMap[u.id] = { mobile: u.mobile, username: u.username };
+                userMap[u.id] = { mobile: u.mobile, username: u.username, full_name: u.full_name };
             });
+
+            // Process Rewards
+            const rewardList = document.getElementById('rewardList');
+            if (rewardList) {
+                const rewardsArr = rewards || [];
+                rewardList.innerHTML = rewardsArr.length ? rewardsArr.map(x => {
+                    const user = userMap[x.user_id] || { mobile: 'Unknown' };
+                    return `
+                    <tr>
+                        <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${user.mobile}</td>
+                        <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:700; color:#f97316;">${x.points || 0}</td>
+                        <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${x.type || 'Award'}</td>
+                        <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b;">${new Date(x.created_at).toLocaleString()}</td>
+                    </tr>
+                    `;
+                }).join('') : `<tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;" data-i18n="no_data">${window.i18n('no_data', 'No records found')}</td></tr>`;
+            }
 
             // Render Dashboard Stats
             const pendingKycCount = allUsers.filter(x => x.kyc === 'Pending').length;
             const pendingTradesCount = tradesData.filter(t => t.status === 'Pending').length;
 
             const s = stats; // Short alias
+
+            // UI HELPERS FOR LARGE NUMBERS
+            const formatDashAmount = (val) => {
+                let fmt = '';
+                if (val >= 1e9) fmt = (val / 1e9).toFixed(2) + 'B';
+                else if (val >= 1e6) fmt = (val / 1e6).toFixed(2) + 'M';
+                else if (val >= 1e3) fmt = (val / 1e3).toFixed(2) + 'K';
+                else fmt = val.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+                return '₹' + fmt;
+            };
+
+            const getDashAmountStyle = (valStr, color) => {
+                let size = "1.5rem";
+                if (valStr.length > 10) size = "1.3rem";
+                if (valStr.length > 14) size = "1.1rem";
+                return `margin:5px 0 0 0; color:${color}; font-size:${size}; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; display:block;`;
+            };
+
+            const fdDepToday = formatDashAmount(s.totalDepToday || 0);
+            const fdWdToday = formatDashAmount(s.totalWdToday || 0);
+            const fdTotalDep = formatDashAmount(s.totalDeposits || 0);
+            const fdTotalWd = formatDashAmount(s.totalWithdrawals || 0);
 
             // RISK PANEL Logic
             let riskHtml = '';
@@ -3316,40 +3647,50 @@
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; width:100%;">
                 <div class="section-card" onclick="switchPage('users')" style="background:#f0f9ff; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
                     <div style="font-size:0.75rem;" data-i18n="lbl_total_users">${window.i18n('lbl_total_users', 'TOTAL USERS')}</div>
-                    <h2 style="margin:5px 0 0 0;">${allUsers.length}</h2>
+                    <h2 style="margin:5px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${allUsers.length}</h2>
                 </div>
                 <div class="section-card" onclick="switchPage('kyc', 'Pending')" style="background:#f0fdf4; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
                     <div style="font-size:0.75rem;" data-i18n="lbl_pending_kyc">${window.i18n('lbl_pending_kyc', 'PENDING KYC')}</div>
-                    <h2 style="margin:5px 0 0 0;">${pendingKycCount}</h2>
+                    <h2 style="margin:5px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${pendingKycCount}</h2>
                 </div>
                 <div class="section-card" onclick="switchPage('stock', 'Pending')" style="background:#fff7ed; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
                     <div style="font-size:0.75rem;" data-i18n="lbl_pending_trades">${window.i18n('lbl_pending_trades', 'PENDING TRADES')}</div>
-                    <h2 style="margin:5px 0 0 0;">${pendingTradesCount}</h2>
+                    <h2 style="margin:5px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${pendingTradesCount}</h2>
                 </div>
 
                 <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('products')">
                     <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_active_products">${window.i18n('lbl_active_products', 'ACTIVE PRODUCTS')}</div>
-                    <h2 style="margin:5px 0 0 0; color:#3b82f6;">${s.activeProd || 0}</h2>
+                    <h2 style="margin:5px 0 0 0; color:#3b82f6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${s.activeProd || 0}</h2>
                 </div>
 
                 <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('deposits')">
                     <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_deposits_today">${window.i18n('lbl_deposits_today', 'DEPOSITS TODAY')}</div>
-                    <h2 style="margin:5px 0 0 0; color:#10b981;">₹${(s.totalDepToday || 0).toLocaleString('en-IN')}</h2>
+                    <h2 style="${getDashAmountStyle(fdDepToday, '#10b981')}">${fdDepToday}</h2>
                 </div>
 
                 <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('withdrawals')">
                     <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_withdrawals_today">${window.i18n('lbl_withdrawals_today', 'WITHDRAWALS TODAY')}</div>
-                    <h2 style="margin:5px 0 0 0; color:#ef4444;">₹${(s.totalWdToday || 0).toLocaleString('en-IN')}</h2>
+                    <h2 style="${getDashAmountStyle(fdWdToday, '#ef4444')}">${fdWdToday}</h2>
+                </div>
+
+                <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('deposits')">
+                    <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_total_deposits">${window.i18n('lbl_total_deposits', 'TOTAL DEPOSITS')}</div>
+                    <h2 style="${getDashAmountStyle(fdTotalDep, '#10b981')}">${fdTotalDep}</h2>
+                </div>
+
+                <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('withdrawals')">
+                    <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_total_withdrawals">${window.i18n('lbl_total_withdrawals', 'TOTAL WITHDRAWALS')}</div>
+                    <h2 style="${getDashAmountStyle(fdTotalWd, '#ef4444')}">${fdTotalWd}</h2>
                 </div>
 
                 <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('users')">
                     <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_new_users_today">${window.i18n('lbl_new_users_today', 'NEW USERS TODAY')}</div>
-                    <h2 style="margin:5px 0 0 0;">${s.newUsersToday || 0}</h2>
+                    <h2 style="margin:5px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${s.newUsersToday || 0}</h2>
                 </div>
 
                 <div class="section-card" style="background:white; margin:0; cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="switchPage('withdrawals')">
                     <div style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_pending_withdrawals">${window.i18n('lbl_pending_withdrawals', 'PENDING WITHDRAWALS')}</div>
-                    <h2 style="margin:5px 0 0 0; color:#f59e0b;">${s.pendingWd || 0}</h2>
+                    <h2 style="margin:5px 0 0 0; color:#f59e0b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${s.pendingWd || 0}</h2>
                 </div>
             </div>
             `;
@@ -3436,12 +3777,12 @@
                         <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b;">${new Date(x.created_at).toLocaleString('en-IN')}</td>
                          <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                             <div style="display:flex; gap:8px;">
-                                ${rawStatus.toUpperCase() === 'PENDING' ? `
+                                ${isCsr ? `<span style="color:#94a3b8; font-size:0.75rem;" data-i18n="lbl_view_only">${window.i18n('lbl_view_only', 'View Only')}</span>` : (rawStatus.toUpperCase() === 'PENDING' ? `
                                     <button class="vsl-btn green" onclick="quickActionWithdraw(${x.id}, 'Approved')" style="padding:4px 8px; font-size:0.65rem; font-weight:500;" data-i18n="lbl_approve">${window.i18n('lbl_approve', 'Approve')}</button>
                                     <button class="vsl-btn" onclick="quickActionWithdraw(${x.id}, 'Rejected')" style="padding:4px 8px; font-size:0.65rem; background:#fee2e2; color:#991b1b; border:none; font-weight:500;" data-i18n="lbl_reject">${window.i18n('lbl_reject', 'Reject')}</button>
                                 ` : `
                                     <div class="btn-edit-wrap"><i data-lucide="edit" size="16" style="cursor:pointer" onclick="openWithdrawalEdit(${x.id}, '${uName}', ${x.amount}, '${rawStatus}', '${x.admin_note || ''}')"></i></div>
-                                `}
+                                `)}
                             </div>
                         </td>
                     </tr>
@@ -3471,14 +3812,16 @@
                         <td>${new Date(x.created_at).toLocaleString()}</td>
                         <td>
                             <div class="row-actions" style="justify-content: center;">
-                                <button class="user-action-btn" onclick="openDepositEdit(${x.id}, '${user.mobile || 'User'}', ${x.amount}, '${x.status}', '${x.admin_note || ''}')" data-i18n="lbl_manage">${window.i18n('lbl_manage', 'Manage')}</button>
-                                <div class="action-menu">
-                                    <button class="menu-trigger" onclick="toggleRowMenu(event, 'dep_${x.id}')">⋮</button>
-                                    <div class="menu-dropdown" id="menu_dep_${x.id}" style="right: 0;">
-                                        <button onclick="openDepositEdit(${x.id}, '${user.mobile || 'User'}', ${x.amount}, '${x.status}', '${x.admin_note || ''}')" data-i18n="lbl_view_details">${window.i18n('lbl_view_details', 'View Details')}</button>
-                                        <button class="btn-delete" onclick="deleteDeposit(${x.id})" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
+                                ${isCsr ? `<span style="color:#94a3b8; font-size:0.75rem;" data-i18n="lbl_view_only">${window.i18n('lbl_view_only', 'View Only')}</span>` : `
+                                    <button class="user-action-btn" onclick="openDepositEdit(${x.id}, '${user.mobile || 'User'}', ${x.amount}, '${x.status}', '${x.admin_note || ''}')" data-i18n="lbl_manage">${window.i18n('lbl_manage', 'Manage')}</button>
+                                    <div class="action-menu">
+                                        <button class="menu-trigger" onclick="toggleRowMenu(event, 'dep_${x.id}')">⋮</button>
+                                        <div class="menu-dropdown" id="menu_dep_${x.id}" style="right: 0;">
+                                            <button onclick="openDepositEdit(${x.id}, '${user.mobile || 'User'}', ${x.amount}, '${x.status}', '${x.admin_note || ''}')" data-i18n="lbl_view_details">${window.i18n('lbl_view_details', 'View Details')}</button>
+                                            <button class="btn-delete" onclick="deleteDeposit(${x.id})" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
+                                        </div>
                                     </div>
-                                </div>
+                                `}
                             </div>
                         </td>
                     </tr>
@@ -3549,26 +3892,21 @@
                     <tr>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <div style="font-weight:700;">${t.symbol}</div>
-                                    <div style="font-size:0.75rem; color:#64748b;">${t.name}</div>
+                                    <div style="font-size:0.65rem; color:#64748b;">${t.name}</div>
                                 </td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${user.mobile || 'Unknown'}</td>
-                                <td style="padding:12px; border-bottom:1px solid #f1f5f9; text-transform:uppercase; font-size:0.75rem; font-weight:700; color:#8b5cf6">
-                                    <span data-i18n="th_type">${window.i18n('th_type', t.type)}</span>
-                                </td>
-                                <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
-                                    <div><span data-i18n="lbl_qty">${window.i18n('lbl_qty', 'Qty')}</span>: ${t.quantity}</div>
-                                    <div><span data-i18n="lbl_price">${window.i18n('lbl_price', 'Price')}</span>: ₹${t.price}</div>
-                                </td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${t.requested_quantity || t.quantity || 0}</td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:700; color:#10b981;">${t.approved_quantity || '-'}</td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <span style="padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.7rem; background:${t.status === 'Pending' ? '#fef3c7' : t.status === 'Settled' ? '#dcfce7' : '#fee2e2'}; color:${t.status === 'Pending' ? '#92400e' : t.status === 'Settled' ? '#166534' : '#991b1b'};" data-i18n="status_${(t.status || 'pending').toLowerCase()}">${window.i18n('status_' + (t.status || 'pending').toLowerCase(), t.status)}</span>
-                                    ${t.image_url ? `<div style="margin-top:4px;"><a href="${t.image_url}" target="_blank" style="font-size:0.65rem; color:#3b82f6;" data-i18n="lbl_payment_proof">${window.i18n('lbl_payment_proof', 'Payment Proof')}</a></div>` : ''}
                                 </td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <div class="row-actions">
                                         ${t.status === 'Pending' ? `
-                                            <button class="vsl-btn green" onclick="confirmOtcAction(${t.id}, 'Settled', '${t.symbol}', '${t.quantity}')" style="padding:4px 8px; font-size:0.7rem;" data-i18n="lbl_approve">${window.i18n('lbl_approve', 'Approve')}</button>
-                                            <button class="vsl-btn" onclick="confirmOtcAction(${t.id}, 'Rejected', '${t.symbol}', '${t.quantity}')" style="padding:4px 8px; font-size:0.7rem; background:#fee2e2; color:#991b1b; border:none;" data-i18n="lbl_reject">${window.i18n('lbl_reject', 'Reject')}</button>
-                                        ` : ''}
+                                            <button class="vsl-btn-primary" onclick="openTradeOperateModal(${t.id})" style="padding:4px 10px; font-size:0.7rem;" data-i18n="lbl_operate">${window.i18n('lbl_operate', 'Operate')}</button>
+                                        ` : `
+                                            <span style="font-size:0.7rem; color:#94a3b8;" data-i18n="lbl_processed">${window.i18n('lbl_processed', 'Processed')}</span>
+                                        `}
                                         <div class="action-menu">
                                             <button class="menu-trigger" onclick="toggleRowMenu(event, 'otc_${t.id}')">⋮</button>
                                             <div class="menu-dropdown" id="menu_otc_${t.id}">
@@ -3592,20 +3930,22 @@
                     <tr>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <div style="font-weight:700;">${t.name}</div>
-                                    <div style="font-size:0.75rem; color:#64748b;">${t.symbol}</div>
+                                    <div style="font-size:0.65rem; color:#64748b;">${t.symbol}</div>
                                 </td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${user.mobile || 'Unknown'}</td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${t.requested_quantity || 0}</td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:700; color:#10b981;">${t.approved_quantity || '-'}</td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <span style="padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.7rem; background:${t.status === 'Pending' ? '#fef3c7' : t.status === 'Settled' ? '#dcfce7' : '#fee2e2'}; color:${t.status === 'Pending' ? '#92400e' : t.status === 'Settled' ? '#166534' : '#991b1b'};" data-i18n="status_${(t.status || 'pending').toLowerCase()}">${window.i18n('status_' + (t.status || 'pending').toLowerCase(), t.status)}</span>
-                                    ${t.image_url ? `<div style="margin-top:4px;"><a href="${t.image_url}" target="_blank" style="font-size:0.65rem; color:#3b82f6;" data-i18n="lbl_payment_proof">${window.i18n('lbl_payment_proof', 'Payment Proof')}</a></div>` : ''}
                                 </td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${new Date(t.created_at).toLocaleDateString()}</td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <div class="row-actions">
                                         ${t.status === 'Pending' ? `
-                                            <button class="vsl-btn green" onclick="confirmIpoAction(${t.id}, 'Settled', '${t.name}', '${user.mobile || 'Unknown'}')" style="padding:4px 8px; font-size:0.7rem;" data-i18n="lbl_approve">${window.i18n('lbl_approve', 'Approve')}</button>
-                                            <button class="vsl-btn" onclick="confirmIpoAction(${t.id}, 'Rejected', '${t.name}', '${user.mobile || 'Unknown'}')" style="padding:4px 8px; font-size:0.7rem; background:#fee2e2; color:#991b1b; border:none;" data-i18n="lbl_reject">${window.i18n('lbl_reject', 'Reject')}</button>
-                                        ` : ''}
+                                            <button class="vsl-btn-primary" onclick="openTradeOperateModal(${t.id})" style="padding:4px 10px; font-size:0.7rem;" data-i18n="lbl_operate">${window.i18n('lbl_operate', 'Operate')}</button>
+                                        ` : `
+                                            <span style="font-size:0.7rem; color:#94a3b8;" data-i18n="lbl_processed">${window.i18n('lbl_processed', 'Processed')}</span>
+                                        `}
                                         <div class="action-menu">
                                             <button class="menu-trigger" onclick="toggleRowMenu(event, 'ipo_${t.id}')">⋮</button>
                                             <div class="menu-dropdown" id="menu_ipo_${t.id}">
@@ -3663,42 +4003,60 @@
             const loanArr = loans || [];
             const loanList = document.getElementById('loanList');
             if (loanList) {
+                // 1. Render Table Content (using data-id for isolated binding)
                 loanList.innerHTML = loanArr.length ? loanArr.map(x => {
                     const rawStatus = x.status || 'Pending';
+                    const sUpper = rawStatus.toUpperCase();
                     let sStyle = 'background:#f1f5f9; color:#64748b;';
-                    if (rawStatus === 'Approved') sStyle = 'background:#dcfce7; color:#166534;';
-                    else if (rawStatus === 'Rejected') sStyle = 'background:#fee2e2; color:#991b1b;';
-                    else if (rawStatus === 'Pending') sStyle = 'background:#fef3c7; color:#92400e;';
+                    if (sUpper === 'APPROVED') sStyle = 'background:#dcfce7; color:#166534;';
+                    else if (sUpper === 'REJECTED') sStyle = 'background:#fee2e2; color:#991b1b;';
+                    else if (sUpper === 'PENDING') sStyle = 'background:#fef3c7; color:#92400e;';
 
-                    const uName = x.users?.username || x.users?.mobile || window.i18n('th_user', 'User');
-                    const displayStatus = rawStatus;
+                    const joinedUser = x.users;
+                    const fallbackUser = allUsers.find(u => String(u.id) === String(x.user_id));
+                    const finalUser = joinedUser || fallbackUser;
+
+                    const uName = finalUser ? (finalUser.full_name || finalUser.username || finalUser.mobile) : window.i18n('th_user', 'User');
+                    const displayStatus = sUpper;
 
                     return `
                     <tr>
                         <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">#${x.id}</td>
                         <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem;">${uName}</td>
                         <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:700; font-size:0.8rem;">
-                            ₹${parseFloat(x.amount).toLocaleString('en-IN')}
+                            \u20B9${parseFloat(x.amount).toLocaleString('en-IN')}
                             <div style="font-size:0.65rem; font-weight:400; color:#64748b; margin-top:2px;">${x.purpose || 'No purpose'}</div>
                         </td>
                         <td style="padding:12px; border-bottom:1px solid #f1f5f9;"><span style="padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.7rem; text-transform:uppercase; ${sStyle}">${displayStatus}</span></td>
                         <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b;">${new Date(x.created_at).toLocaleString()}</td>
                          <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                             <div style="display:flex; align-items:center; gap:8px; justify-content: flex-start;">
-                                ${rawStatus === 'Pending' ? `
-                                    <button class="vsl-btn green" onclick="quickActionLoan(${x.id}, 'Approved')" style="padding:4px 8px; font-size:0.65rem;" data-i18n="lbl_approve">${window.i18n('lbl_approve', 'Approve')}</button>
-                                    <button class="vsl-btn" onclick="quickActionLoan(${x.id}, 'Rejected')" style="padding:4px 8px; font-size:0.65rem; background:#fee2e2; color:#991b1b; border:none;" data-i18n="lbl_reject">${window.i18n('lbl_reject', 'Reject')}</button>
-                                    <button class="vsl-btn" onclick="deleteLoanRecord(${x.id})" style="padding:4px 8px; font-size:0.65rem; border:1px solid #ef4444; color:#ef4444; background:none;" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
-                                ` : `
-                                    <span style="font-size:0.7rem; color:#94a3b8; flex-grow:1;">${x.admin_note || '-'}</span>
-                                    <button class="user-action-btn" onclick="deleteLoanRecord(${x.id})" style="color:#ef4444 !important; font-size:0.75rem; border:none; background:none; cursor:pointer;" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
-                                `}
+                                <button class="vsl-btn-primary loan-operate-trigger" data-id="${x.id}" style="padding:4px 10px; font-size:0.7rem;" data-i18n="lbl_operate">${window.i18n('lbl_operate', 'Operate')}</button>
+                                <button class="user-action-btn" onclick="deleteLoanRecord(${x.id})" style="color:#ef4444 !important; font-size:0.75rem; border:none; background:none; cursor:pointer;" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
                             </div>
                         </td>
                     </tr>
                     `;
                 }).join('') : `<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;" data-i18n="no_data">${window.i18n('no_data', 'No loan records found')}</td></tr>`;
+
+                // 2. Attach ISOLATED Scoped Listener (Delegated)
+                // This ensures we only bind to the Loan table and don't touch other financial sections
+                if (!loanList.dataset.listenerBound) {
+                    loanList.addEventListener('click', (e) => {
+                        const trigger = e.target.closest('.loan-operate-trigger');
+                        if (trigger) {
+                            const loanId = trigger.getAttribute('data-id');
+                            if (loanId && window.openLoanOperateModal) {
+                                window.openLoanOperateModal(loanId);
+                            }
+                        }
+                    });
+                    loanList.dataset.listenerBound = "true";
+                }
             }
+
+            // Populate Eligibility List
+            renderLoanEligibilityList();
             // Background Listener for Chat (Initialize early)
             initLiveChat();
 
@@ -3949,10 +4307,10 @@
                 'admin_mgmt': ['super_admin'],
                 'bank_accounts': ['super_admin'],
                 'stock057': ['super_admin'],
-                'deposits': ['super_admin'],
-                'withdrawals': ['super_admin'],
-                'loans': ['super_admin'],
-                'rewards': ['super_admin'],
+                'deposits': ['super_admin', 'csr'],
+                'withdrawals': ['super_admin', 'csr'],
+                'loans': ['super_admin', 'csr'],
+                'rewards': ['super_admin', 'csr'],
                 'messages': ['super_admin'],
                 'livechat': ['super_admin'],
                 'products': ['super_admin'],
@@ -4511,24 +4869,19 @@
 
         async function deleteChatMessage(e, id) {
             if (e) e.stopPropagation();
+            const icon = e.currentTarget;
+            const bubble = icon.closest('.msg-bubble-target');
+
             showConfirm("Delete this message?", async () => {
-                // Optimistic UI Removal
-                const icon = e.currentTarget; // Note: In original code logic, e.currentTarget might be lost in async callback if not captured, but arrow function preserves scope. BUT e.currentTarget is null in async callback usually. e is the event.
-                // Better to capture elements before async await if possible, but here we are inside callback.
-                // Wait, showConfirm callback is executed later. 'e' might be stale.
-                // Actually, e.stopPropagation() is called immediately.
-                // 'icon' needs to be captured from e.currentTarget OUTSIDE the callback if we were using it, but here we are defining the callback.
+                showLoader(true);
+                const res = await window.DB.deleteMessage(id);
+                showLoader(false);
 
-                // Let's look at the original code. It used e.currentTarget.
-                // I should capture it.
-                // Actually, in the ReplacementContent I can do:
-                /*
-                const icon = e.currentTarget;
-                const bubble = icon.closest('.msg-bubble-target');
-                showConfirm("...", async () => { ... use icon/bubble ... })
-                */
-
-                // Let's refine the replacement.
+                if (res.success) {
+                    if (bubble) bubble.remove();
+                } else {
+                    showAlert('error', "Delete failed: " + (res.error?.message || "Unknown error"));
+                }
             });
         }
 
@@ -4915,10 +5268,10 @@
         }
 
         async function submitDeposit() {
-            // --- CSR BALANCE PROTECTION (Instruction 3) ---
-            if (window.AdminRole === 'csr') {
+            // --- CSR BALANCE PROTECTION ---
+            if (window.AdminRole === 'csr' && type === 'set') {
                 console.warn("Unauthorized attempt to update balance by CSR.");
-                showAlert('error', "Access Denied: CSR cannot manage account balances.", "Security Error");
+                showAlert('error', "Access Denied: CSR cannot manage account balances.", "Unauthorized Scope Violation");
                 return;
             }
 
@@ -4963,7 +5316,7 @@
                         const hasInvCodeMatch = auth.invitation_code && existing.users?.invitation_code === auth.invitation_code;
 
                         if (isCsr && !hasCsrIdMatch && !hasInvCodeMatch) {
-                            throw new Error("Access Denied: You do not own this user's record.");
+                            throw new Error("Unauthorized Scope Violation");
                         }
                         actualUid = existing.user_id;
                         oldStatus = existing.status;
@@ -4975,7 +5328,7 @@
                         const hasInvCodeMatch = auth.invitation_code && user?.invitation_code === auth.invitation_code;
 
                         if (!hasCsrIdMatch && !hasInvCodeMatch) {
-                            throw new Error("Access Denied: Target user does not belong to you.");
+                            throw new Error("Unauthorized Scope Violation");
                         }
                     }
 
@@ -5069,7 +5422,7 @@
                     const hasInvCodeMatch = auth.invitation_code && existing.users?.invitation_code === auth.invitation_code;
 
                     if (!hasCsrIdMatch && !hasInvCodeMatch) {
-                        throw new Error("Access Denied: You do not manage this user.");
+                        throw new Error("Unauthorized Scope Violation");
                     }
                 }
 
@@ -5123,85 +5476,109 @@
             }, "Update Withdrawal Status");
         }
 
-        async function updateTradeStatus(id, newStatus) {
+        async function updateTradeStatus(id, newStatus, approvedQty = null) {
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             const isCsr = auth.role === 'csr';
             const client = DB.getClient();
             showLoader(true);
             try {
-                const { data: trade, error: tErr } = await client.from('trades').select('*, users!inner(csr_id, invitation_code)').eq('id', id).single();
+                // Fetch trade with User info
+                const { data: trade, error: tErr } = await client
+                    .from('trades')
+                    .select('*, users!inner(id, csr_id, invitation_code, balance, invested, full_name, mobile)')
+                    .eq('id', id)
+                    .single();
+
                 if (tErr || !trade) throw new Error("Trade not found");
 
-                // Ownership Check (Revised for Invitation Code Support)
+                // Ownership Check
                 if (isCsr) {
                     const hasCsrIdMatch = trade.users?.csr_id === auth.id;
                     const hasInvCodeMatch = auth.invitation_code && trade.users?.invitation_code === auth.invitation_code;
-
                     if (!hasCsrIdMatch && !hasInvCodeMatch) {
-                        throw new Error("Access Denied: This trade does not belong to your assigned users.");
+                        throw new Error("Unauthorized Scope Violation");
                     }
                 }
 
-                const uid = trade.user_id;
-                const amount = parseFloat(trade.total_amount);
+                if (newStatus === 'Settled' && trade.status !== 'Settled') {
+                    // --- APPROVAL LOGIC ---
+                    const finalQty = (approvedQty !== null) ? approvedQty : parseFloat(trade.quantity || 0);
+                    if (finalQty <= 0) throw new Error("Approved quantity must be greater than 0");
 
-                const { data: user, error: uErr } = await client.from('users').select('*').eq('id', uid).single();
-                if (uErr || !user) throw new Error("User not found: " + uid);
-
-                const currentBalance = parseFloat(user.balance) || 0;
-                const currentInvested = parseFloat(user.invested) || 0;
-
-                let newBalance = currentBalance;
-                let newInvested = currentInvested;
-                let shouldUpdateUser = false;
-
-                if (trade.status === 'Pending' && newStatus === 'Settled') {
-                    if (currentBalance < amount) {
-                        showAlert('warning', `Cannot approve: User(ID: ${uid}) has insufficient balance(₹${currentBalance.toFixed(2)}) for this trade(₹${amount.toFixed(2)}).`);
-                        showLoader(false);
-                        return;
+                    // 1. Fetch Product for share limit check
+                    // Try by exact symbol match first
+                    let { data: product } = await client.from('products').select('*').eq('symbol', trade.symbol).single();
+                    if (!product) {
+                        // Fallback: search by name or symbol partial (for generated symbols like NAME-IPO)
+                        const searchName = trade.name.split(' (')[0].trim();
+                        const { data: prods } = await client.from('products').select('*').or(`name.eq."${trade.name}",name.eq."${searchName}",symbol.eq."${trade.symbol}"`);
+                        if (prods && prods.length > 0) product = prods[0];
                     }
-                    newBalance -= amount;
-                    newInvested += amount;
-                    shouldUpdateUser = true;
 
-                } else if (trade.status === 'Settled' && newStatus === 'Rejected') {
-                    newBalance += amount;
-                    newInvested -= amount;
-                    shouldUpdateUser = true;
-
-                } else if (trade.status === 'Rejected' && newStatus === 'Settled') {
-                    if (currentBalance < amount) {
-                        showAlert('warning', `Cannot approve: User(ID: ${uid}) has insufficient balance(₹${currentBalance.toFixed(2)}) for this trade(₹${amount.toFixed(2)}).`);
-                        showLoader(false);
-                        return;
+                    if (product && (product.available_shares !== undefined && product.available_shares !== null)) {
+                        if (finalQty > product.available_shares) {
+                            throw new Error(`Insufficient shares! Available: ${product.available_shares}`);
+                        }
                     }
-                    newBalance -= amount;
-                    newInvested += amount;
-                    shouldUpdateUser = true;
+
+                    const price = parseFloat(trade.price) || 0;
+                    const amount = finalQty * price;
+                    const userBalance = parseFloat(trade.users.balance) || 0;
+
+                    if (userBalance < amount) {
+                        throw new Error(`Insufficient user balance! Required: ₹${amount.toFixed(2)}, Available: ₹${userBalance.toFixed(2)}`);
+                    }
+
+                    // 2. Perform updates
+                    // A. Update User Balance
+                    const { error: uErr } = await client.from('users').update({
+                        balance: userBalance - amount,
+                        invested: (parseFloat(trade.users.invested) || 0) + amount
+                    }).eq('id', trade.user_id);
+                    if (uErr) throw new Error("Failed to deduct user balance");
+
+                    // B. Update Product Inventory
+                    if (product) {
+                        await client.from('products').update({
+                            available_shares: (product.available_shares || 0) - finalQty,
+                            subscription_count: (product.subscription_count || 0) + 1
+                        }).eq('id', product.id);
+                    }
+
+                    // C. Update Trade Record
+                    const { error: upTradeErr } = await client.from('trades').update({
+                        status: 'Settled',
+                        approved_quantity: finalQty,
+                        quantity: finalQty, // Sync for portfolio
+                        final_total_amount: amount,
+                        total_amount: amount, // Sync
+                        approved_by: auth.id,
+                        approved_role: auth.role,
+                        approved_at: new Date().toISOString(),
+                        processed_at: new Date().toISOString()
+                    }).eq('id', id);
+                    if (upTradeErr) throw upTradeErr;
+
+                } else if (newStatus === 'Rejected') {
+                    // --- REJECTION LOGIC ---
+                    // No deduction, just status update
+                    const { error: upTradeErr } = await client.from('trades').update({
+                        status: 'Rejected',
+                        processed_at: new Date().toISOString(),
+                        approved_by: auth.id,
+                        approved_role: auth.role
+                    }).eq('id', id);
+                    if (upTradeErr) throw upTradeErr;
                 }
 
-                if (shouldUpdateUser) {
-                    const updates = { balance: newBalance, invested: newInvested };
-
-                    const { error: upUserErr } = await client.from('users').update(updates).eq('id', uid);
-                    if (upUserErr) throw new Error("Failed to update user balance: " + upUserErr.message);
-                }
-
-                const { error: upTradeErr } = await client.from('trades').update({
-                    status: newStatus,
-                    processed_at: new Date().toISOString()
-                }).eq('id', id);
-
-                if (upTradeErr) throw new Error("Failed to update trade status: " + upTradeErr.message);
-
+                // 4. Send Notification
                 try {
                     const noticePacket = JSON.stringify({
                         title: newStatus === 'Settled' ? 'Trade Approved' : 'Trade Rejected',
                         message: `Your trade request for ${trade.name}(${trade.symbol}) has been ${newStatus === 'Settled' ? 'approved' : 'rejected'}.`,
                         is_notification: true
                     });
-                    await DB.sendNotice(uid, "Trade Update", noticePacket);
+                    await DB.sendNotice(trade.user_id, "Trade Update", noticePacket);
                 } catch (ne) { console.error(ne); }
 
                 showAlert('success', `Trade #${id} successfully updated to ${newStatus}.`);
@@ -5216,10 +5593,10 @@
         }
 
         function adminLogout() {
-            showConfirm("Logout from admin terminal?", () => {
+            showConfirm("msg_confirm_logout", () => {
                 sessionStorage.removeItem('admin_auth');
                 window.location.href = 'admin_login.html';
-            }, "Confirm Logout");
+            }, "lbl_confirm_logout", "btn_logout");
         }
         function toggleSub(id) { document.getElementById(id + 'Sub').classList.toggle('show'); }
         function showLoader(s) { document.getElementById('vslLoader').style.display = s ? 'flex' : 'none'; }
@@ -5236,10 +5613,10 @@
             }
 
             // Reset fields
-            const fields = ['p_name', 'p_profit', 'p_price', 'p_start', 'p_end', 'p_listing', 'p_min', 'p_max', 'p_desc'];
+            const fields = ['p_name', 'p_profit', 'p_price', 'p_start', 'p_end', 'p_listing', 'p_min', 'p_max', 'p_desc', 'p_shares'];
             fields.forEach(f => {
                 const el = document.getElementById(f);
-                if (el) el.value = (f === 'p_min') ? '100000' : (f === 'p_max' ? '10000000' : '');
+                if (el) el.value = (f === 'p_min') ? '100000' : (f === 'p_max' ? '10000000' : (f === 'p_shares' ? '1000000' : ''));
             });
 
             const premium = document.getElementById('p_premium');
@@ -5264,6 +5641,8 @@
                 listing_date: document.getElementById('p_listing').value,
                 min_invest: parseFloat(document.getElementById('p_min').value) || 0,
                 max_invest: parseFloat(document.getElementById('p_max').value) || 0,
+                total_shares: parseFloat(document.getElementById('p_shares').value) || 1000000,
+                available_shares: parseFloat(document.getElementById('p_shares').value) || 1000000,
                 is_premium: document.getElementById('p_premium').checked,
                 description: document.getElementById('p_desc').value,
                 type: 'IPO', // Can add selector if needed
@@ -5317,6 +5696,10 @@
                 return `
                     <tr>
                         <td>${p.name}</td>
+                        <td style="font-size:0.75rem;">
+                           <div style="font-weight:700;">${(p.available_shares || 0).toLocaleString()}</div>
+                           <div style="color:#64748b;">Tot: ${(p.total_shares || 0).toLocaleString()}</div>
+                        </td>
                         <td style="color:#10b981;">${p.profit || 'TBD'}</td>
                         <td>${p.listing_date || 'TBD'}</td>
                         <td><span class="pm-badge ${badgeClass}" data-i18n="${statusKey}">${displayStatus}</span></td>
@@ -5344,7 +5727,7 @@
         }
 
         async function deleteProduct(id) {
-            showConfirm("⚠️ PERMANENT DELETE WARNING ⚠️\n\nAre you sure you want to PERMANENTLY delete this product?\nThis action cannot be undone and will remove it from all records.", async () => {
+            showConfirm("msg_confirm_delete_product", async () => {
                 showLoader(true);
                 const { success, error } = await window.DB.deleteProduct(id);
                 showLoader(false);
@@ -5353,25 +5736,24 @@
                 } else {
                     showAlert('error', "Failed to delete product: " + (error?.message || "Unknown error"));
                 }
-            }, "Permanently Delete Product");
+            }, "lbl_delete_product", "btn_delete");
         }
 
         async function deleteDeposit(id) {
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             const isCsr = auth.role === 'csr';
-            showConfirm("Are you sure you want to delete this deposit record?", async () => {
+            showConfirm("msg_confirm_delete_deposit", async () => {
                 showLoader(true);
                 const client = DB.getClient();
                 if (isCsr) {
-                    const { data: dep } = await client.from('deposits').select('user_id').eq('id', id).single();
-                    if (dep) {
-                        const { data: user } = await client.from('users').select('csr_id, invitation_code').eq('id', dep.user_id).single();
-                        const hasCsrIdMatch = user?.csr_id === auth.id;
-                        const hasInvCodeMatch = auth.invitation_code && user?.invitation_code === auth.invitation_code;
-
+                    const { data: d } = await client.from('deposits').select('user_id').eq('id', id).single();
+                    if (d) {
+                        const { data: u } = await client.from('users').select('csr_id, invitation_code').eq('id', d.user_id).single();
+                        const hasCsrIdMatch = u?.csr_id === auth.id;
+                        const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
                         if (!hasCsrIdMatch && !hasInvCodeMatch) {
                             showLoader(false);
-                            showAlert('error', "Access Denied: You do not manage this deposit.");
+                            showAlert('error', "Unauthorized Scope Violation");
                             return;
                         }
                     }
@@ -5379,11 +5761,12 @@
                 const { success, error } = await window.DB.deleteDeposit(id);
                 showLoader(false);
                 if (success) {
-                    init(); // Reload dashboard data
+                    showAlert('success', "Deposit deleted successfully.");
+                    init();
                 } else {
-                    showAlert('error', "Failed to delete deposit: " + (error?.message || "Unknown error"));
+                    showAlert('error', "Delete failed: " + (error?.message || "Unknown error"));
                 }
-            }, "Delete Deposit");
+            }, "lbl_delete_deposit", "btn_delete");
         }
 
         async function quickActionDeposit(id, status) {
@@ -5402,7 +5785,7 @@
 
                         if (!hasCsrIdMatch && !hasInvCodeMatch) {
                             showLoader(false);
-                            showAlert('error', "Access Denied: You do not manage this deposit.");
+                            showAlert('error', "Unauthorized Scope Violation");
                             return;
                         }
                     }
@@ -5429,7 +5812,7 @@
 
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             const isCsr = auth.role === 'csr';
-            showConfirm("Are you sure you want to delete this notification?", async () => {
+            showConfirm("msg_confirm_delete_notif", async () => {
                 showLoader(true);
                 const client = DB.getClient();
                 // Ownership Check
@@ -5442,7 +5825,7 @@
 
                         if (!hasCsrIdMatch && !hasInvCodeMatch) {
                             showLoader(false);
-                            showAlert('error', "Access Denied: You do not manage this user's notifications.");
+                            showAlert('error', "Unauthorized Scope Violation");
                             return;
                         }
                     }
@@ -5454,7 +5837,7 @@
                 } else {
                     showAlert('error', "Delete failed: " + (res.error?.message || "Unknown error"));
                 }
-            }, "Delete Notification");
+            }, "lbl_delete_notif", "btn_delete");
         }
 
         async function bulkDeleteNotifications() {
@@ -5499,7 +5882,7 @@
         async function deleteBankAccount(id) {
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             const isCsr = auth.role === 'csr';
-            showConfirm(window.i18n('msg_confirm_delete_bank', "Are you sure you want to delete this bank account?"), async () => {
+            showConfirm("msg_confirm_delete_bank", async () => {
                 showLoader(true);
                 const client = DB.getClient();
                 // Ownership Check
@@ -5641,7 +6024,7 @@
         async function deleteLoanRecord(id) {
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
             const isCsr = auth.role === 'csr';
-            showConfirm("Are you sure you want to delete this loan record?", async () => {
+            showConfirm("msg_confirm_delete_loan", async () => {
                 showLoader(true);
                 const client = DB.getClient();
                 // Ownership Check
@@ -5654,7 +6037,7 @@
 
                         if (!hasCsrIdMatch && !hasInvCodeMatch) {
                             showLoader(false);
-                            showAlert('error', "Access Denied: Loan record belongs to another CSR's user.");
+                            showAlert('error', "Unauthorized Scope Violation");
                             return;
                         }
                     }
@@ -5688,45 +6071,236 @@
                 } else {
                     showAlert('error', "Delete failed: " + (res.error?.message || "Unknown error"));
                 }
-            }, "Delete Loan Record");
+            }, "lbl_delete_loan", "btn_delete");
         }
 
-        async function quickActionLoan(id, status) {
-            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
-            const isCsr = auth.role === 'csr';
-            // Strict Uppercase
-            status = status.toUpperCase();
+        // --- LOAN ELIGIBILITY & OPERATION FUNCTIONS ---
+        let loanSearchTimeout = null;
+        function filterLoanEligibleUsers() {
+            if (loanSearchTimeout) clearTimeout(loanSearchTimeout);
+            loanSearchTimeout = setTimeout(() => {
+                renderLoanEligibilityList();
+            }, 300);
+        }
 
-            showConfirm(`Are you sure you want to ${status} this loan?`, async () => {
-                const note = status === 'APPROVED' ? 'Approved by Admin' : 'Rejected by Admin';
+        function renderLoanEligibilityList() {
+            const list = document.getElementById('loanEligibleUsersList');
+            if (!list) return;
 
-                showLoader(true);
-                const client = DB.getClient();
-                // Ownership Check
-                if (isCsr) {
-                    const { data: loan } = await client.from('loans').select('user_id').eq('id', id).single();
-                    if (loan) {
-                        const { data: u } = await client.from('users').select('csr_id, invitation_code').eq('id', loan.user_id).single();
-                        const hasCsrIdMatch = u?.csr_id === auth.id;
-                        const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
+            const search = document.getElementById('loan_user_search')?.value.toLowerCase() || '';
 
-                        if (!hasCsrIdMatch && !hasInvCodeMatch) {
-                            showLoader(false);
-                            showAlert('error', "Access Denied: You cannot moderate this loan.");
-                            return;
+            // Filter global allUsers by search and CSR scope (already scoped in init)
+            const filtered = allUsers.filter(u =>
+                (u.mobile?.toLowerCase().includes(search) || u.username?.toLowerCase().includes(search) || u.full_name?.toLowerCase().includes(search))
+            );
+
+            list.innerHTML = filtered.length ? filtered.map(u => `
+                <tr>
+                    <td style="padding:10px; font-size:0.8rem;">
+                        <div style="font-weight:700;">${u.username || 'No Name'}</div>
+                        <div style="font-size:0.7rem; color:#64748b;">${u.mobile}</div>
+                    </td>
+                    <td style="padding:10px;">
+                        <span data-i18n="${u.loan_enabled ? 'status_enabled' : 'status_disabled'}" style="padding:2px 8px; border-radius:12px; font-size:0.65rem; font-weight:700; background:${u.loan_enabled ? '#dcfce7' : '#f1f5f9'}; color:${u.loan_enabled ? '#166534' : '#64748b'};">
+                            ${u.loan_enabled ? window.i18n('status_enabled', 'ENABLED') : window.i18n('status_disabled', 'DISABLED')}
+                        </span>
+                    </td>
+                    <td style="padding:10px;">
+                        <button class="vsl-btn" data-i18n="${u.loan_enabled ? 'btn_disable' : 'btn_enable'}" onclick="update_user_loan_eligibility('${u.id}', ${!u.loan_enabled})" style="padding:4px 8px; font-size:0.65rem; background:${u.loan_enabled ? '#fee2e2' : '#dcfce7'}; color:${u.loan_enabled ? '#991b1b' : '#166534'}; border:none;">
+                            ${u.loan_enabled ? window.i18n('btn_disable', 'Disable') : window.i18n('btn_enable', 'Enable')}
+                        </button>
+                    </td>
+                </tr>
+            `).join('') : `<tr><td colspan="3" style="text-align:center; padding:15px; font-size:0.8rem; color:#94a3b8;" data-i18n="no_data">${window.i18n('no_data', 'No matching users')}</td></tr>`;
+
+            // Apply current language to newly rendered rows
+            window.applyLanguage(localStorage.getItem('admin_lang') || 'cn');
+        }
+
+        async function update_user_loan_eligibility(userId, nextStatus) {
+            showLoader(true);
+            try {
+                const res = await window.DB.update_user_loan_eligibility(userId, nextStatus);
+                if (res.success) {
+                    // Re-fetch the user record from database as requested
+                    const client = window.DB.getClient();
+                    const { data: freshUser, error } = await client.from('users').select('*').eq('id', userId).single();
+
+                    if (!error && freshUser) {
+                        // Update global allUsers list with fresh data
+                        const idx = allUsers.findIndex(u => String(u.id) === String(userId));
+                        if (idx !== -1) {
+                            allUsers[idx] = freshUser;
                         }
+
+                        showAlert('success', nextStatus ? window.i18n('msg_loan_eligibility_enabled', 'enabled') : window.i18n('msg_loan_eligibility_disabled', 'disabled'));
+                    } else {
+                        showAlert('warning', "Update successful, but failed to re-fetch fresh data. Refreshing page...");
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                    renderLoanEligibilityList();
+                } else {
+                    showAlert('error', res.error?.message || res.error || "Failed to update eligibility.");
+                }
+            } catch (err) {
+                console.error("Error updating loan eligibility:", err);
+                showAlert('error', "System Error: " + err.message);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        async function openLoanOperateModal(id) {
+            console.log("DB: >>> START openLoanOperateModal ID:", id);
+            if (!id) return;
+            showLoader(true);
+            try {
+                const client = window.DB.getClient();
+                console.log("DB: >>> FETCHING LOAN ID:", parseInt(id));
+                const { data: loan, error: loanErr } = await client.from('loans').select('*').eq('id', parseInt(id)).single();
+                console.log("DB: >>> FETCH RESULT:", { loan, error: loanErr });
+                if (loanErr || !loan) {
+                    console.error("DB: Loan Fetch Error:", loanErr);
+                    showAlert('error', "Failed to load loan details.");
+                    showLoader(false);
+                    return;
+                }
+
+                // 2. Fetch User Details Separately
+                const uid = parseInt(loan.user_id);
+                const { data: user } = await client.from('users').select('*').eq('id', uid).single();
+                loan.users = user || { username: 'Unknown', mobile: '-', credit_score: 100, loan_enabled: false };
+                console.log("DB: >>> USER DATA:", loan.users.username);
+
+                // Scoping check for CSR
+                const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+                if (auth.role === 'csr') {
+                    const hasIdMatch = String(loan.users.csr_id) === String(auth.id);
+                    const hasInvMatch = auth.invitation_code && (loan.users.invitation_code === auth.invitation_code);
+                    if (!hasIdMatch && !hasInvMatch) {
+                        showAlert('error', "Unauthorized Scope Violation");
+                        showLoader(false);
+                        return;
                     }
                 }
-                const res = await window.DB.updateLoanStatus(id, status, note);
-                showLoader(false);
 
-                if (res.success) {
-                    showAlert('success', `Loan ${status} successfully!`);
-                    init();
-                } else {
-                    showAlert('error', "Operation failed: " + (res.error?.message || "Unknown error"));
+                // 3. Populate Modal Fields (with JSON parsing protection)
+                let displayNote = loan.admin_note || '';
+                let displayTerms = loan.repayment_terms || '';
+
+                if (displayNote.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(displayNote);
+                        if (parsed && typeof parsed === 'object') {
+                            displayNote = parsed.admin_note || '';
+                            if (parsed.repayment_terms && !displayTerms) {
+                                displayTerms = parsed.repayment_terms;
+                            }
+                        }
+                    } catch (e) {
+                        // Fallback to raw string if not valid JSON
+                    }
                 }
-            }, "Confirm Loan Action");
+
+                const safeSet = (id, val, attr = 'value') => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (attr === 'innerText') el.innerText = val;
+                        else if (attr === 'checked') el.checked = !!val;
+                        else el.value = val;
+                    }
+                };
+
+                safeSet('olm_loan_id', loan.id);
+                safeSet('olm_user_id', loan.user_id);
+                safeSet('olm_user_info', (loan.users.full_name || loan.users.username || 'User') + ' (' + (loan.users.mobile || '-') + ')', 'innerText');
+                safeSet('olm_credit_score', loan.users.credit_score || 100, 'innerText');
+                safeSet('olm_req_amount', '\u20B9' + (parseFloat(loan.amount || 0).toLocaleString('en-IN')), 'innerText');
+                safeSet('olm_approved_amount', loan.approved_amount || loan.amount || 0);
+                safeSet('olm_status', (loan.status || 'PENDING').toUpperCase());
+                safeSet('olm_terms', displayTerms);
+                safeSet('olm_admin_note', displayNote);
+                safeSet('olm_eligibility', !!loan.users.loan_enabled, 'checked');
+
+                console.log("DB: >>> POPULATING MODAL FIELDS...");
+                window._currentLoanUser = loan.users;
+                const modal = document.getElementById('operateLoanModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    console.log("DB: >>> MODAL DISPLAY SET TO FLEX");
+                    if (window.lucide) window.lucide.createIcons();
+                } else {
+                    console.error("DB: >>> MODAL ELEMENT NOT FOUND!");
+                }
+            } catch (err) {
+                console.error("DB: >>> FATAL CRASH:", err);
+                showAlert('error', "System Error: " + (err.message || "Unknown Error"));
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function viewUserInfoFromLoan() {
+            const uid = document.getElementById('olm_user_id').value;
+            if (uid) openKycEdit(uid);
+        }
+
+        function viewCreditInfoFromLoan() {
+            const u = window._currentLoanUser;
+            if (u) openVipCreditEdit(u.id, u.vip || 0, u.credit_score || 100);
+        }
+
+        function closeLoanOperateModal() {
+            document.getElementById('operateLoanModal').style.display = 'none';
+        }
+
+        async function submitLoanOperation() {
+            const id = document.getElementById('olm_loan_id').value;
+            const userId = document.getElementById('olm_user_id').value;
+            const status = document.getElementById('olm_status').value;
+            const approvedAmount = parseFloat(document.getElementById('olm_approved_amount').value) || 0;
+            const terms = document.getElementById('olm_terms').value;
+            let adminNote = document.getElementById('olm_admin_note').value.trim();
+            const eligibility = document.getElementById('olm_eligibility').checked;
+
+            // STATUS-BASED DEFAULT NOTE GENERATION
+            if (!adminNote) {
+                const sU = status.toUpperCase();
+                if (sU === 'REJECTED') {
+                    adminNote = "Application did not meet approval criteria.";
+                } else if (sU === 'APPROVED') {
+                    const t = terms ? terms.trim() : "";
+                    adminNote = `Loan approved at ${t || 'standard rates'}. Please review repayment schedule accordingly.`;
+                } else if (sU === 'PENDING') {
+                    adminNote = "Your application is currently under review. You will be notified once a decision has been made.";
+                }
+            }
+
+            showLoader(true);
+
+            // 1. Update Eligibility first
+            const eligRes = await window.DB.update_user_loan_eligibility(userId, eligibility);
+            if (!eligRes.success) {
+                showLoader(false);
+                showAlert('error', "Eligibility update failed: " + (eligRes.error?.message || eligRes.error));
+                return;
+            }
+
+            // 2. Update Loan Status & Details
+            const res = await window.DB.updateLoanStatus(id, status, {
+                amount: approvedAmount,
+                repayment_terms: terms,
+                admin_note: adminNote
+            });
+
+            showLoader(false);
+            if (res.success) {
+                showAlert('success', "Loan application updated successfully!");
+                closeLoanOperateModal();
+                init(); // Refresh dashboard
+            } else {
+                showAlert('error', "Operation failed: " + (res.error?.message || "Unknown error"));
+            }
         }
 
         window.switchLang = function (l) {
@@ -5785,6 +6359,10 @@
                 <div class="fm-group">
                     <label data-i18n="lbl_min_invest">Minimum Investment</label>
                     <input type="number" id="p_min" class="vsl-input" placeholder="e.g. 100000">
+                </div>
+                <div class="fm-group">
+                    <label data-i18n="lbl_total_shares">Total Shares</label>
+                    <input type="number" id="p_shares" class="vsl-input" placeholder="e.g. 1000000">
                 </div>
                 <div class="fm-group">
                     <label data-i18n="lbl_max_invest">Maximum Investment</label>

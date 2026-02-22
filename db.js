@@ -819,11 +819,18 @@ window.DB = {
     // --- ADMIN METHODS ---
     async getUsers() {
         const client = this.getClient();
-        const { data } = await client
-            .from('users')
-            .select('*')
-            .or('is_deleted.is.null,is_deleted.eq.false')
-            .order('created_at', { ascending: false });
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        let query = client.from('users').select('*').or('is_deleted.is.null,is_deleted.eq.false');
+
+        if (auth.role === 'csr') {
+            if (auth.invitation_code) {
+                query = query.or(`csr_id.eq.${auth.id},invitation_code.eq.${auth.invitation_code}`);
+            } else {
+                query = query.eq('csr_id', auth.id);
+            }
+        }
+
+        const { data } = await query.order('created_at', { ascending: false });
         return data || [];
     },
 
@@ -844,25 +851,65 @@ window.DB = {
 
     async getDeposits() {
         const client = this.getClient();
-        const { data } = await client.from('deposits').select('*').order('created_at', { ascending: false });
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        let query = client.from('deposits').select('*');
+        if (auth.role === 'csr') {
+            query = client.from('deposits').select('*, users!inner(*)');
+            if (auth.invitation_code) {
+                query = query.or(`users.csr_id.eq.${auth.id},users.invitation_code.eq.${auth.invitation_code}`);
+            } else {
+                query = query.eq('users.csr_id', auth.id);
+            }
+        }
+        const { data } = await query.order('created_at', { ascending: false });
         return data || [];
     },
 
     async getWithdrawals() {
         const client = this.getClient();
-        const { data } = await client.from('withdrawals').select('*').order('created_at', { ascending: false });
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        let query = client.from('withdrawals').select('*');
+        if (auth.role === 'csr') {
+            query = client.from('withdrawals').select('*, users!inner(*)');
+            if (auth.invitation_code) {
+                query = query.or(`users.csr_id.eq.${auth.id},users.invitation_code.eq.${auth.invitation_code}`);
+            } else {
+                query = query.eq('users.csr_id', auth.id);
+            }
+        }
+        const { data } = await query.order('created_at', { ascending: false });
         return data || [];
     },
 
     async getAllMessages() {
         const client = this.getClient();
-        const { data } = await client.from('messages').select('*').order('created_at', { ascending: false });
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        let query = client.from('messages').select('*');
+        if (auth.role === 'csr') {
+            query = client.from('messages').select('*, users!inner(*)');
+            if (auth.invitation_code) {
+                query = query.or(`users.csr_id.eq.${auth.id},users.invitation_code.eq.${auth.invitation_code}`);
+            } else {
+                query = query.eq('users.csr_id', auth.id);
+            }
+        }
+        const { data } = await query.order('created_at', { ascending: false });
         return data || [];
     },
 
     async getKycs() {
         const client = this.getClient();
-        const { data } = await client.from('kyc_submissions').select('*').order('created_at', { ascending: false });
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        let query = client.from('kyc_submissions').select('*');
+        if (auth.role === 'csr') {
+            query = client.from('kyc_submissions').select('*, users!inner(*)');
+            if (auth.invitation_code) {
+                query = query.or(`users.csr_id.eq.${auth.id},users.invitation_code.eq.${auth.invitation_code}`);
+            } else {
+                query = query.eq('users.csr_id', auth.id);
+            }
+        }
+        const { data } = await query.order('created_at', { ascending: false });
         return data || [];
     },
 
@@ -877,7 +924,7 @@ window.DB = {
                 const hasInvCodeMatch = target && auth.invitation_code && target.invitation_code === auth.invitation_code;
 
                 if (!hasCsrIdMatch && !hasInvCodeMatch) {
-                    return { success: false, error: "Unauthorized: Access denied to users managed by other CSRs." };
+                    return { success: false, error: "Unauthorized Scope Violation" };
                 }
             } else if (auth.role !== 'super_admin') {
                 // Only CSR and Super Admin can manage this if logged in as admin
@@ -915,19 +962,36 @@ window.DB = {
 
     async updateKycStatus(id, status) {
         const client = this.getClient();
-        const { data, error } = await client.from('kyc_submissions').update({ status }).eq('id', id);
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        if (auth.role === 'csr') {
+            const { data: kyc } = await client.from('kyc_submissions').select('*, users!inner(*)').eq('id', id).single();
+            const hasCsrIdMatch = kyc?.users?.csr_id == auth.id;
+            const hasInvCodeMatch = auth.invitation_code && kyc?.users?.invitation_code === auth.invitation_code;
+            if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                return { success: false, error: { message: "Unauthorized Scope Violation" } };
+            }
+        }
+        const { error } = await client.from('kyc_submissions').update({ status, processed_at: new Date().toISOString() }).eq('id', id);
         return { success: !error, error };
     },
 
     async updateDepositStatus(id, status) {
         const client = this.getClient();
-        const { data, error } = await client.from('deposits').update({ status }).eq('id', id);
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        if (auth.role === 'csr') {
+            return { success: false, error: { message: "Unauthorized Role Action: CSR accounts are view-only for deposits." } };
+        }
+        const { error } = await client.from('deposits').update({ status, processed_at: new Date().toISOString() }).eq('id', id);
         return { success: !error, error };
     },
 
     async updateWithdrawalStatus(id, status) {
         const client = this.getClient();
-        const { data, error } = await client.from('withdrawals').update({ status }).eq('id', id);
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        if (auth.role === 'csr') {
+            return { success: false, error: { message: "Unauthorized Role Action: CSR accounts are view-only for withdrawals." } };
+        }
+        const { error } = await client.from('withdrawals').update({ status, processed_at: new Date().toISOString() }).eq('id', id);
         return { success: !error, error };
     },
 
@@ -967,16 +1031,33 @@ window.DB = {
 
     async getAllTrades() {
         const client = this.getClient();
-        const { data, error } = await client
-            .from('trades')
-            .select('*')
-            .order('created_at', { ascending: false });
-
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        let query = client.from('trades').select('*');
+        if (auth.role === 'csr') {
+            query = client.from('trades').select('*, users!inner(*)');
+            if (auth.invitation_code) {
+                query = query.or(`users.csr_id.eq.${auth.id},users.invitation_code.eq.${auth.invitation_code}`);
+            } else {
+                query = query.eq('users.csr_id', auth.id);
+            }
+        }
+        const { data, error } = await query.order('created_at', { ascending: false });
         return data || [];
     },
 
     async updateTradeStatus(id, status, adminNote = '') {
         const client = this.getClient();
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+
+        if (auth.role === 'csr') {
+            const { data: trade } = await client.from('trades').select('*, users!inner(*)').eq('id', id).single();
+            const hasCsrIdMatch = trade?.users?.csr_id == auth.id;
+            const hasInvCodeMatch = auth.invitation_code && trade?.users?.invitation_code === auth.invitation_code;
+            if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                return { success: false, error: { message: "Unauthorized Scope Violation" } };
+            }
+        }
+
         const updateData = {
             status,
             admin_note: adminNote,
@@ -1106,7 +1187,7 @@ window.DB = {
         const query = client
             .from('loans')
             .select('*')
-            .eq('user_id', userId)
+            .eq('user_id', parseInt(userId))
             .or('is_deleted.is.null,is_deleted.eq.false')
             .order('created_at', { ascending: false });
 
@@ -1123,46 +1204,149 @@ window.DB = {
 
     async getAllLoans() {
         const client = this.getClient();
+        if (!client) return [];
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        const isCsr = auth.role === 'csr';
 
-        const { data, error } = await client
+        // 1. Fetch loans independently (Resilient against join/scoping errors)
+        const { data: loans, error: loanErr } = await client
             .from('loans')
             .select('*')
+            .or('is_deleted.is.null,is_deleted.eq.false')
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Loan fetch error:', error);
-            return [];
+        if (loanErr) {
+            console.error('DB: getAllLoans Fetch Error:', loanErr);
         }
 
-        return data || [];
+        if (loanErr || !loans) {
+            const { data: fb } = await client.from('loans').select('*').limit(200);
+            return fb || [];
+        }
+
+        // 2. Fetch users separately for manual mapping
+        const { data: users } = await client.from('users').select('id, username, full_name, mobile, csr_id, invitation_code');
+
+        // Manual mapping (Fail-safe Join)
+        const finalData = (loans || []).map(loan => {
+            loan.users = (users || []).find(u => String(u.id) === String(loan.user_id)) || null;
+            return loan;
+        });
+
+        // 3. Apply CSR scope validation in-memory
+        if (isCsr && finalData) {
+            return finalData.filter(loan => {
+                const u = loan.users;
+                if (!u) return false;
+                const hasIdMatch = String(u.csr_id) === String(auth.id);
+                const hasInvMatch = auth.invitation_code && u.invitation_code === auth.invitation_code;
+                return hasIdMatch || hasInvMatch;
+            });
+        }
+
+        return finalData;
     },
 
     async submitLoan(loanData) {
         const client = this.getClient();
         if (!client) return { success: false, message: 'Database disconnected' };
 
+        // 1. Log Input for deep debugging
+        console.log("DB: submitLoan called with:", loanData);
+
+        // 2. Normalize Data (Ensuring types match requested schema)
+        // STRICT: cast user_id to integer to match users table id
+        const insertPacket = {
+            user_id: parseInt(loanData.user_id),
+            amount: parseFloat(loanData.amount),
+            purpose: loanData.purpose || loanData.reason || 'Not specified',
+            reason: loanData.purpose || loanData.reason || 'Not specified',
+            status: 'Pending',
+            created_at: new Date().toISOString(),
+            is_deleted: false
+        };
+
+        console.log("DB: Normalized Insert Packet:", insertPacket);
+
+        // 3. Execute Pure INSERT (No eligibility guard, no .single() which adds 400 overhead on fail)
         const { data, error } = await client
             .from('loans')
-            .insert([loanData])
-            .select()
-            .single();
+            .insert([insertPacket])
+            .select();
 
-        return { success: !error, data, error };
+        if (error) {
+            console.error("DB: LOAN_INSERT_ERROR_DETECTED!");
+            console.error("Error Message:", error.message);
+            console.error("Error Details:", error.details);
+            console.error("Error Hint:", error.hint);
+            console.error("Full Error Object:", error);
+
+            return {
+                success: false,
+                message: error.message || "Database Insertion Failed",
+                details: error.details,
+                hint: error.hint
+            };
+        }
+
+        console.log("DB: Loan Insert Success:", data);
+        return { success: true, data: data ? data[0] : null };
     },
 
-    async updateLoanStatus(id, status, adminNote = '') {
+    async updateLoanStatus(id, status, payload = {}) {
         const client = this.getClient();
         if (!client) return { success: false };
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        const isCsr = auth.role === 'csr';
+
+        // Fetch loan with left join instead of restrictive inner join
+        const { data: loan, error: fetchErr } = await client.from('loans').select('*, users(*)').eq('id', id).single();
+        if (fetchErr || !loan) return { success: false, message: 'Loan not found' };
+
+        // Ownership/Role Check (Applied after resilient fetch)
+        if (isCsr) {
+            const u = loan.users;
+            const hasCsrIdMatch = u?.csr_id == auth.id;
+            const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
+            if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                return { success: false, error: { message: "Unauthorized Scope Violation" } };
+            }
+        }
 
         const updateData = {
-            status,
-            admin_note: adminNote,
+            status: status.toUpperCase(),
+            amount: payload.amount !== undefined ? payload.amount : loan.amount,
+            admin_note: payload.admin_note || '',
+            repayment_terms: payload.repayment_terms || loan.repayment_terms || '',
             processed_at: new Date().toISOString()
         };
-        const { data, error } = await client
+
+        const { error } = await client
             .from('loans')
             .update(updateData)
             .eq('id', id);
+
+        return { success: !error, error };
+    },
+
+    async update_user_loan_eligibility(userId, enabled) {
+        const client = this.getClient();
+        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+        const isCsr = auth.role === 'csr';
+
+        if (isCsr) {
+            const { data: u } = await client.from('users').select('csr_id, invitation_code').eq('id', userId).single();
+            const hasCsrIdMatch = u?.csr_id == auth.id;
+            const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
+            if (!hasCsrIdMatch && !hasInvCodeMatch) {
+                return { success: false, error: "Unauthorized Scope Violation" };
+            }
+        }
+
+        const { error } = await client
+            .from('users')
+            .update({ loan_enabled: enabled })
+            .eq('id', userId);
 
         return { success: !error, error };
     },
