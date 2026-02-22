@@ -165,27 +165,36 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
         const tax = grossValue * 0.0012;
         const txn = grossValue * 0.0003;
         const finalNetReturn = grossValue - tax - txn;
+        const buyAmount = parseFloat(trade.total_amount) || 0;
 
-        // 3. Update the original trade to 'Sold'
+        // 3. Update the original trade to 'Sold' with historical data
+        const realisedProfit = finalNetReturn - buyAmount;
         const { error: tradeUpdateErr } = await client.from('trades').update({
             status: 'Sold',
             processed_at: new Date().toISOString(),
+            sell_price: finalSellPrice,
+            total_sale_value: finalNetReturn,
+            realised_profit: realisedProfit,
+            sell_timestamp: new Date().toISOString(),
+            sell_tax: tax,
+            sell_fees: txn,
             admin_note: `Sold at Market ₹${finalSellPrice.toLocaleString('en-IN')}`
         }).eq('id', tradeId);
         if (tradeUpdateErr) throw tradeUpdateErr;
 
-        // 4. Record history
+        // 4. Record history (Secondary record for ledger/inflow)
         const { error: sellRecordErr } = await client.from('trades').insert([{
             user_id: user.id,
             symbol: trade.symbol,
             name: trade.name,
-            type: trade.type, // Preserve original type (e.g., 'stock') to satisfy DB constraint
+            type: trade.type, // Reverted to original type to satisfy DB check constraint (trades_type_check)
             quantity: qty,
             price: finalSellPrice,
             total_amount: finalNetReturn,
             tax_amount: tax,
             txn_charge: txn,
             status: 'Sold',
+            processed_at: new Date().toISOString(),
             admin_note: `Proceeds from selling ${qty} shares of ${trade.symbol}`
         }]);
         if (sellRecordErr) throw sellRecordErr;
@@ -194,7 +203,6 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
         const freshUser = await window.DB.refreshCurrentUser();
         const currentBalance = parseFloat(freshUser.balance) || 0;
         const currentInvested = parseFloat(freshUser.invested) || 0;
-        const buyAmount = parseFloat(trade.total_amount) || 0;
 
         const newBalance = currentBalance + finalNetReturn;
         const newInvested = Math.max(0, currentInvested - buyAmount);

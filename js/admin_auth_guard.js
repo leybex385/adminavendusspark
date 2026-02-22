@@ -73,8 +73,6 @@
         // Modules to REMOVE from DOM completely for CSR
         const restrictedIds = [
             'btn_admin_mgmt',
-            'btn_financial',
-            'subFinancialSub',
             'btn_bank_accounts',
             'btn_stock057',
             'btn_messages',        // Notification Center
@@ -88,13 +86,8 @@
             if (el) el.remove(); // STRUCTURAL REMOVAL (Instruction 2)
         });
 
-        // Remove COMMUNICATION header (find by text content)
-        const headers = document.querySelectorAll('.nav-menu div');
-        headers.forEach(h => {
-            if (h.innerText.trim().toUpperCase() === 'COMMUNICATION') {
-                h.remove();
-            }
-        });
+        const groupComm = document.querySelector('[data-i18n="group_communication"]');
+        if (groupComm) groupComm.remove();
 
         // Under Transaction Records: Remove Stock, Bulk. Keep IPO and OTC.
         const restrictedSubItems = ['btn_stock', 'btn_bulk'];
