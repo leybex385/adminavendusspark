@@ -1650,8 +1650,10 @@
             <div style="display:flex; align-items:center; gap:15px; margin-left:auto;">
                 <!-- Premium Language Switcher -->
                 <div class="lang-switcher">
-                    <button class="lang-btn" onclick="switchLang('en')" data-lang="en" title="English">🇺🇸</button>
-                    <button class="lang-btn" onclick="switchLang('cn')" data-lang="cn" title="Chinese">🇨🇳</button>
+                    <button class="lang-btn" onclick="switchLang('en')" data-lang="en" data-i18n-title="lang_en"
+                        title="English">🇺🇸</button>
+                    <button class="lang-btn" onclick="switchLang('cn')" data-lang="cn" data-i18n-title="lang_cn"
+                        title="Chinese">🇨🇳</button>
                 </div>
 
                 <button onclick="init()" data-i18n="btn_refresh"
@@ -2265,6 +2267,7 @@
                                 <th data-i18n="th_requested">Requested</th>
                                 <th data-i18n="th_approved">Approved</th>
                                 <th data-i18n="th_status">Status</th>
+                                <th data-i18n="th_lockup_info">Lock-up Info</th>
                                 <th data-i18n="th_date">Date</th>
                                 <th data-i18n="th_operate">Operate</th>
                             </thead>
@@ -2650,11 +2653,61 @@
                     </div>
                 </div>
 
-                <div class="kyc-form-group">
+                <div class="kyc-form-group" id="otm_approved_group">
                     <label style="font-weight:700; font-size:0.85rem; color:#1e293b;" data-i18n="th_approved">Approved
                         Quantity</label>
                     <input type="number" id="otm_approved_qty" class="kyc-input"
                         placeholder="Enter quantity to allocate">
+                </div>
+
+                <!-- IPO Lock-up Management Section -->
+                <div id="otm_lockup_section"
+                    style="display:none; margin-top:15px; border-top:1px dashed #e2e8f0; padding-top:15px;">
+                    <div style="font-weight:800; font-size:0.8rem; color:#d4af37; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;"
+                        data-i18n="lbl_lockup_mgmt">
+                        IPO Lock-up Management</div>
+
+                    <div
+                        style="background:#fff7ed; padding:10px; border-radius:8px; margin-bottom:12px; font-size:0.75rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span style="color:#9a3412;" data-i18n="lbl_current_expiry">Current Expiry:</span>
+                            <span id="otm_lockup_current" style="font-weight:700; color:#c2410c;">-</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#9a3412;" data-i18n="lbl_status">Status:</span>
+                            <span id="otm_lockup_status" style="font-weight:700;">-</span>
+                        </div>
+                    </div>
+
+                    <div id="otm_lockup_controls" style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="kyc-form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.75rem; color:#64748b;"
+                                data-i18n="lbl_additional_lockup">Additional Lock-up Days</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="number" id="otm_lockup_extend" class="kyc-input"
+                                    style="height:32px; font-size:0.85rem;" placeholder="e.g. 30">
+                                <button class="vsl-btn orange" onclick="manageIpoLockup('EXTEND')"
+                                    style="padding:0 12px; font-size:0.75rem; white-space:nowrap;"
+                                    data-i18n="lbl_extend">Extend</button>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:flex-end;">
+                            <div class="kyc-form-group" style="margin-bottom:0; flex:1;">
+                                <label style="font-size:0.75rem; color:#64748b;" data-i18n="lbl_set_exact_expiry">Set
+                                    Exact Expiry Date</label>
+                                <input type="date" id="otm_lockup_precise" class="kyc-input"
+                                    style="height:32px; font-size:0.85rem;">
+                            </div>
+                            <button class="vsl-btn orange" onclick="manageIpoLockup('MODIFY')"
+                                style="padding:0 12px; height:32px; font-size:0.75rem; white-space:nowrap;"
+                                data-i18n="lbl_set_date">Set
+                                Date</button>
+                        </div>
+                        <button class="vsl-btn" onclick="manageIpoLockup('OVERRIDE')"
+                            style="background:#ef4444; color:#fff; border:none; padding:8px; font-size:0.75rem; font-weight:700; border-radius:6px; margin-top:5px;"
+                            data-i18n="lbl_force_unlock">FORCE
+                            UNLOCK (OVERRIDE)</button>
+                    </div>
                 </div>
             </div>
             <div class="kyc-modal-footer" style="display:flex; gap:12px;">
@@ -3232,7 +3285,7 @@
                 fetchSafe('deposits', (isCsr ? client.from('deposits').select('*').in('user_id', userIds) : client.from('deposits').select('*')).order('created_at', { ascending: false }).limit(100)),
                 fetchSafe('trades_stock', (isCsr ? client.from('trades').select('*').eq('type', 'stock').in('user_id', userIds) : client.from('trades').select('*').eq('type', 'stock')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
                 fetchSafe('trades_otc', (isCsr ? client.from('trades').select('*').eq('type', 'otc').in('user_id', userIds) : client.from('trades').select('*').eq('type', 'otc')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
-                fetchSafe('trades_ipo', (isCsr ? client.from('trades').select('*').eq('type', 'ipo').in('user_id', userIds) : client.from('trades').select('*').eq('type', 'ipo')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
+                fetchSafe('trades_ipo', (isCsr ? client.from('trades').select('*').ilike('type', 'ipo').in('user_id', userIds) : client.from('trades').select('*').ilike('type', 'ipo')).or('is_deleted.is.null,is_deleted.eq.false').order('id', { ascending: false })),
                 window.DB.getAllLoans(),
                 fetchSafe('messages', (isCsr ? client.from('messages').select('*').in('user_id', userIds) : client.from('messages').select('*')).order('created_at', { ascending: false }).limit(100)),
                 fetchSafe('rewards', (isCsr ? client.from('rewards').select('*').in('user_id', userIds) : client.from('rewards').select('*')).order('created_at', { ascending: false }).limit(100))
@@ -3374,6 +3427,54 @@
                 document.getElementById('otm_shares_group').style.display = product ? 'flex' : 'none';
 
                 document.getElementById('operateTradeModal').style.display = 'flex';
+
+                // --- IPO LOCK-UP MANAGEMENT LOGIC ---
+                const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+                const lockupSection = document.getElementById('otm_lockup_section');
+                const lockupControls = document.getElementById('otm_lockup_controls');
+                const approvedGroup = document.getElementById('otm_approved_group');
+                const footer = document.querySelector('.kyc-modal-footer');
+
+                if (trade.type?.toLowerCase() === 'ipo') {
+                    if (lockupSection) lockupSection.style.display = 'block';
+
+                    if (trade.status === 'Holding' || trade.status === 'Settled' || trade.status === 'Sold') {
+                        // Already approved/processed
+                        document.getElementById('otm_title').innerText = window.i18n('lbl_lockup_mgmt', 'IPO Lock-up Management');
+                        if (approvedGroup) approvedGroup.style.display = 'none';
+                        if (footer) footer.style.display = 'none';
+                    } else {
+                        // Pending/Awaiting
+                        document.getElementById('otm_title').innerText = window.i18n('lbl_ipo_approval', 'IPO Order Approval');
+                        if (approvedGroup) approvedGroup.style.display = 'block';
+                        if (footer) footer.style.display = 'flex';
+                    }
+
+                    // Populate lockup info
+                    if (trade.lockup_until) {
+                        const end = new Date(trade.lockup_until);
+                        const now = new Date();
+                        const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                        const isActive = diff > 0;
+                        document.getElementById('otm_lockup_current').innerText = end.toLocaleDateString();
+                        document.getElementById('otm_lockup_status').innerText = isActive ? window.i18n('status_active', 'ACTIVE') : window.i18n('lbl_lock_expired', 'EXPIRED');
+                        document.getElementById('otm_lockup_status').style.color = isActive ? '#f59e0b' : '#10b981';
+                    } else {
+                        document.getElementById('otm_lockup_current').innerText = window.i18n('lbl_not_set', 'Not Set');
+                        document.getElementById('otm_lockup_status').innerText = window.i18n('lbl_na', 'N/A');
+                        document.getElementById('otm_lockup_status').style.color = '#94a3b8';
+                    }
+
+                    // Role-based control
+                    if (lockupControls) {
+                        lockupControls.style.display = (auth.role === 'super_admin' || auth.role === 'csr') ? 'flex' : 'none';
+                    }
+                } else {
+                    if (lockupSection) lockupSection.style.display = 'none';
+                    if (approvedGroup) approvedGroup.style.display = 'block';
+                    if (footer) footer.style.display = 'flex';
+                }
+
                 lucide.createIcons();
             } catch (err) {
                 console.error(err);
@@ -3381,6 +3482,51 @@
             } finally {
                 showLoader(false);
             }
+        }
+
+        async function manageIpoLockup(action) {
+            const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            const tradeId = document.getElementById('otm_trade_id').value;
+            const extraDays = parseInt(document.getElementById('otm_lockup_extend').value) || 0;
+            const preciseDate = document.getElementById('otm_lockup_precise').value;
+
+            if (action === 'EXTEND' && extraDays <= 0) {
+                return showAlert('warning', "Please enter a valid number of days to extend.");
+            }
+            if (action === 'MODIFY' && !preciseDate) {
+                return showAlert('warning', "Please select a valid date.");
+            }
+
+            const confirmMsg = action === 'OVERRIDE'
+                ? "Are you sure you want to FORCE UNLOCK this position? This will allow the user to sell immediately."
+                : `Confirm ${action.toLowerCase()} for this lock-up?`;
+
+            showConfirm(confirmMsg, async () => {
+                showLoader(true);
+                const client = DB.getClient();
+                try {
+                    const { data, error } = await client.rpc('manage_ipo_lockup', {
+                        p_trade_id: parseInt(tradeId),
+                        p_admin_id: parseInt(auth.id),
+                        p_admin_role: auth.role,
+                        p_action: action,
+                        p_new_date: preciseDate ? new Date(preciseDate).toISOString() : null,
+                        p_extra_days: parseInt(extraDays)
+                    });
+
+                    if (error) throw error;
+                    if (data && !data.success) throw new Error(data.error);
+
+                    showAlert('success', "Lock-up updated successfully");
+                    closeTradeOperateModal();
+                    if (typeof init === 'function') init();
+                } catch (err) {
+                    console.error(err);
+                    showAlert('error', "Update failed: " + err.message);
+                } finally {
+                    showLoader(false);
+                }
+            });
         }
 
         function closeTradeOperateModal() {
@@ -3393,13 +3539,13 @@
 
             if (status === 'Settled') {
                 if (isNaN(appQty) || appQty <= 0) {
-                    return showAlert('warning', "Please enter a valid approved quantity.");
+                    return showAlert('warning', window.i18n('err_invalid_qty', "Please enter a valid approved quantity."));
                 }
                 await updateTradeStatus(tradeId, 'Settled', appQty);
             } else {
-                showConfirm("Are you sure you want to REJECT this trade?", async () => {
+                showConfirm(window.i18n('msg_confirm_reject_trade', "Are you sure you want to REJECT this trade?"), async () => {
                     await updateTradeStatus(tradeId, 'Rejected');
-                }, "Confirm Reject");
+                }, window.i18n('lbl_confirm_reject', "Confirm Reject"));
             }
             closeTradeOperateModal();
         }
@@ -3902,7 +4048,7 @@
                                 </td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <div class="row-actions">
-                                        ${t.status === 'Pending' ? `
+                                        ${(t.status === 'Pending' || t.status === 'Awaiting') ? `
                                             <button class="vsl-btn-primary" onclick="openTradeOperateModal(${t.id})" style="padding:4px 10px; font-size:0.7rem;" data-i18n="lbl_operate">${window.i18n('lbl_operate', 'Operate')}</button>
                                         ` : `
                                             <span style="font-size:0.7rem; color:#94a3b8;" data-i18n="lbl_processed">${window.i18n('lbl_processed', 'Processed')}</span>
@@ -3936,16 +4082,39 @@
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${t.requested_quantity || 0}</td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:700; color:#10b981;">${t.approved_quantity || '-'}</td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
-                                    <span style="padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.7rem; background:${t.status === 'Pending' ? '#fef3c7' : t.status === 'Settled' ? '#dcfce7' : '#fee2e2'}; color:${t.status === 'Pending' ? '#92400e' : t.status === 'Settled' ? '#166534' : '#991b1b'};" data-i18n="status_${(t.status || 'pending').toLowerCase()}">${window.i18n('status_' + (t.status || 'pending').toLowerCase(), t.status)}</span>
+                                    <span style="padding:3px 8px; border-radius:4px; font-weight:700; font-size:0.7rem; background:${(t.status === 'Pending' || t.status === 'Awaiting') ? '#fef3c7' : t.status === 'Settled' ? '#dcfce7' : t.status === 'Holding' ? '#dcfce7' : '#fee2e2'}; color:${(t.status === 'Pending' || t.status === 'Awaiting') ? '#92400e' : t.status === 'Settled' ? '#166534' : t.status === 'Holding' ? '#166534' : '#991b1b'};" data-i18n="status_${(t.status || 'pending').toLowerCase()}">${window.i18n('status_' + (t.status || 'pending').toLowerCase(), t.status)}</span>
+                                </td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.65rem;">
+                                    ${t.lockup_until ? (() => {
+                                const end = new Date(t.lockup_until);
+                                const now = new Date();
+                                const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                                const isActive = diff > 0;
+                                return `
+                                            <div style="font-weight:700; color:${isActive ? '#f59e0b' : '#10b981'};">${isActive ? 'ACTIVE' : 'EXPIRED'}</div>
+                                            <div style="color:#64748b; font-size:0.6rem;">From: ${new Date(t.approved_at || t.created_at).toLocaleDateString()}</div>
+                                            <div style="color:#64748b; font-size:0.6rem;">Until: ${end.toLocaleDateString()}</div>
+                                            ${isActive ? `<div style="color:#94a3b8; font-weight:700;">${diff} days left</div>` : ''}
+                                        `;
+                            })() : '<span style="color:#cbd5e1">-</span>'}
                                 </td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${new Date(t.created_at).toLocaleDateString()}</td>
                                 <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
                                     <div class="row-actions">
-                                        ${t.status === 'Pending' ? `
-                                            <button class="vsl-btn-primary" onclick="openTradeOperateModal(${t.id})" style="padding:4px 10px; font-size:0.7rem;" data-i18n="lbl_operate">${window.i18n('lbl_operate', 'Operate')}</button>
-                                        ` : `
+                                        ${(t.status === 'Pending' || t.status === 'Awaiting') ? `
+                                            <button class="vsl-btn-primary" onclick="openTradeOperateModal(${t.id})" style="padding:4px 10px; font-size:0.75rem;" data-i18n="lbl_approve">${window.i18n('lbl_approve', 'Approve')}</button>
+                                        ` : ''}
+
+                                        ${(t.type?.toLowerCase() === 'ipo' && (t.status === 'Holding' || t.status === 'Settled')) ? `
+                                            <button class="vsl-btn-secondary" onclick="openTradeOperateModal(${t.id})" style="padding:4px 10px; font-size:0.75rem; background:#fff7ed; color:#f97316; border:1px solid #fed7aa; display:flex; align-items:center; gap:4px;" data-i18n="lbl_lockup">
+                                                <i data-lucide="lock" size="14"></i> ${window.i18n('lbl_lockup', 'Lock-up')}
+                                            </button>
+                                        ` : ''}
+
+                                        ${!(t.status === 'Pending' || t.status === 'Awaiting' || (t.type?.toLowerCase() === 'ipo' && (t.status === 'Holding' || t.status === 'Settled'))) ? `
                                             <span style="font-size:0.7rem; color:#94a3b8;" data-i18n="lbl_processed">${window.i18n('lbl_processed', 'Processed')}</span>
-                                        `}
+                                        ` : ''}
+
                                         <div class="action-menu">
                                             <button class="menu-trigger" onclick="toggleRowMenu(event, 'ipo_${t.id}')">⋮</button>
                                             <div class="menu-dropdown" id="menu_ipo_${t.id}">
@@ -5016,7 +5185,7 @@
         async function openKycEdit(uid) {
             const client = DB.getClient();
             showLoader(true);
-            const { data: user } = await client.from('users').select('*').eq('id', uid).single();
+            const { data: user } = await client.from('users').select('id, mobile, username, kyc, credit_score, vip, balance, invested, frozen, bonus, outstanding, full_name, id_number, address, loan_enabled, created_at, csr_id, invitation_code').eq('id', uid).single();
             const { data: kyc } = await client.from('kyc_submissions').select('*').eq('user_id', uid).order('submitted_at', { ascending: false }).limit(1).single();
 
             targetKycUser = uid;
@@ -5506,10 +5675,8 @@
                     if (finalQty <= 0) throw new Error("Approved quantity must be greater than 0");
 
                     // 1. Fetch Product for share limit check
-                    // Try by exact symbol match first
                     let { data: product } = await client.from('products').select('*').eq('symbol', trade.symbol).single();
                     if (!product) {
-                        // Fallback: search by name or symbol partial (for generated symbols like NAME-IPO)
                         const searchName = trade.name.split(' (')[0].trim();
                         const { data: prods } = await client.from('products').select('*').or(`name.eq."${trade.name}",name.eq."${searchName}",symbol.eq."${trade.symbol}"`);
                         if (prods && prods.length > 0) product = prods[0];
@@ -5523,21 +5690,42 @@
 
                     const price = parseFloat(trade.price) || 0;
                     const amount = finalQty * price;
-                    const userBalance = parseFloat(trade.users.balance) || 0;
 
-                    if (userBalance < amount) {
-                        throw new Error(`Insufficient user balance! Required: ₹${amount.toFixed(2)}, Available: ₹${userBalance.toFixed(2)}`);
+                    // --- WALLET STATE TRANSITION: STAGE 2 (ATOMIC IPO/OTC) ---
+                    if (['otc', 'ipo'].includes((trade.type || "").toLowerCase())) {
+                        const res = await window.DB.approveSubscriptionAtomic(id, finalQty, auth.id, auth.role);
+                        if (!res.success) {
+                            const errStr = res.error?.message || res.error || "Unknown Error";
+                            throw new Error("Failed to transition funds from frozen to invested: " + errStr);
+                        }
+                    } else {
+                        // Original fallback for secondary market trades (Normal Buy)
+                        const userBalance = parseFloat(trade.users.balance) || 0;
+                        if (userBalance < amount) {
+                            throw new Error(`Insufficient user balance! Required: ₹${amount.toFixed(2)}, Available: ₹${userBalance.toFixed(2)}`);
+                        }
+                        const { error: uErr } = await client.from('users').update({
+                            balance: userBalance - amount,
+                            invested: (parseFloat(trade.users.invested) || 0) + amount
+                        }).eq('id', trade.user_id);
+                        if (uErr) throw new Error("Failed to deduct user balance: " + uErr.message);
+
+                        // Update Trade Record (Only for non-atomic path)
+                        const { error: upTradeErr } = await client.from('trades').update({
+                            status: 'Settled',
+                            approved_quantity: finalQty,
+                            quantity: finalQty,
+                            final_total_amount: amount,
+                            total_amount: amount,
+                            approved_by: auth.id,
+                            approved_role: auth.role,
+                            approved_at: new Date().toISOString(),
+                            processed_at: new Date().toISOString()
+                        }).eq('id', id);
+                        if (upTradeErr) throw upTradeErr;
                     }
 
-                    // 2. Perform updates
-                    // A. Update User Balance
-                    const { error: uErr } = await client.from('users').update({
-                        balance: userBalance - amount,
-                        invested: (parseFloat(trade.users.invested) || 0) + amount
-                    }).eq('id', trade.user_id);
-                    if (uErr) throw new Error("Failed to deduct user balance");
-
-                    // B. Update Product Inventory
+                    // B. Update Product Inventory (Shared for both paths)
                     if (product) {
                         await client.from('products').update({
                             available_shares: (product.available_shares || 0) - finalQty,
@@ -5545,30 +5733,24 @@
                         }).eq('id', product.id);
                     }
 
-                    // C. Update Trade Record
-                    const { error: upTradeErr } = await client.from('trades').update({
-                        status: 'Settled',
-                        approved_quantity: finalQty,
-                        quantity: finalQty, // Sync for portfolio
-                        final_total_amount: amount,
-                        total_amount: amount, // Sync
-                        approved_by: auth.id,
-                        approved_role: auth.role,
-                        approved_at: new Date().toISOString(),
-                        processed_at: new Date().toISOString()
-                    }).eq('id', id);
-                    if (upTradeErr) throw upTradeErr;
-
                 } else if (newStatus === 'Rejected') {
-                    // --- REJECTION LOGIC ---
-                    // No deduction, just status update
-                    const { error: upTradeErr } = await client.from('trades').update({
-                        status: 'Rejected',
-                        processed_at: new Date().toISOString(),
-                        approved_by: auth.id,
-                        approved_role: auth.role
-                    }).eq('id', id);
-                    if (upTradeErr) throw upTradeErr;
+                    // --- WALLET STATE TRANSITION: STAGE 3 (ATOMIC IPO/OTC REJECTION) ---
+                    if (['otc', 'ipo'].includes((trade.type || "").toLowerCase())) {
+                        const res = await window.DB.rejectSubscriptionAtomic(id, auth.id, auth.role);
+                        if (!res.success) {
+                            const errStr = res.error?.message || res.error || "Unknown Error";
+                            console.error("Stage 3 transition failed:", errStr);
+                            throw new Error("Rejection failed: " + errStr);
+                        }
+                    } else {
+                        const { error: upTradeErr } = await client.from('trades').update({
+                            status: 'Rejected',
+                            processed_at: new Date().toISOString(),
+                            approved_by: auth.id,
+                            approved_role: auth.role
+                        }).eq('id', id);
+                        if (upTradeErr) throw upTradeErr;
+                    }
                 }
 
                 // 4. Send Notification
@@ -5613,7 +5795,7 @@
             }
 
             // Reset fields
-            const fields = ['p_name', 'p_profit', 'p_price', 'p_start', 'p_end', 'p_listing', 'p_min', 'p_max', 'p_desc', 'p_shares'];
+            const fields = ['p_name', 'p_profit', 'p_price', 'p_start', 'p_end', 'p_listing', 'p_lockup', 'p_min', 'p_max', 'p_desc', 'p_shares'];
             fields.forEach(f => {
                 const el = document.getElementById(f);
                 if (el) el.value = (f === 'p_min') ? '100000' : (f === 'p_max' ? '10000000' : (f === 'p_shares' ? '1000000' : ''));
@@ -5639,6 +5821,7 @@
                 start_date: document.getElementById('p_start').value,
                 end_date: document.getElementById('p_end').value,
                 listing_date: document.getElementById('p_listing').value,
+                lockup_days: parseInt(document.getElementById('p_lockup').value) || 0,
                 min_invest: parseFloat(document.getElementById('p_min').value) || 0,
                 max_invest: parseFloat(document.getElementById('p_max').value) || 0,
                 total_shares: parseFloat(document.getElementById('p_shares').value) || 1000000,
@@ -6124,7 +6307,7 @@
                 if (res.success) {
                     // Re-fetch the user record from database as requested
                     const client = window.DB.getClient();
-                    const { data: freshUser, error } = await client.from('users').select('*').eq('id', userId).single();
+                    const { data: freshUser, error } = await client.from('users').select('id, balance, invested, frozen, bonus, outstanding').eq('id', userId).single();
 
                     if (!error && freshUser) {
                         // Update global allUsers list with fresh data
@@ -6168,7 +6351,7 @@
 
                 // 2. Fetch User Details Separately
                 const uid = parseInt(loan.user_id);
-                const { data: user } = await client.from('users').select('*').eq('id', uid).single();
+                const { data: user } = await client.from('users').select('id, mobile, username, balance').eq('id', uid).single();
                 loan.users = user || { username: 'Unknown', mobile: '-', credit_score: 100, loan_enabled: false };
                 console.log("DB: >>> USER DATA:", loan.users.username);
 
@@ -6355,6 +6538,10 @@
                 <div class="fm-group">
                     <label data-i18n="listing_date">Listing Date</label>
                     <input type="date" id="p_listing" class="vsl-input">
+                </div>
+                <div class="fm-group">
+                    <label data-i18n="lbl_lockup_days">Lock-up Period (Days)</label>
+                    <input type="number" id="p_lockup" class="vsl-input" placeholder="e.g. 365" value="0">
                 </div>
                 <div class="fm-group">
                     <label data-i18n="lbl_min_invest">Minimum Investment</label>

@@ -52,6 +52,74 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // --- Load User Info ---
+    async function loadAdminInfo() {
+        try {
+            const adminAuthStr = sessionStorage.getItem('admin_auth');
+            if (!adminAuthStr) return;
+            const adminData = JSON.parse(adminAuthStr);
+            const adminId = parseInt(adminData.id);
+
+            const { data, error } = await client
+                .from('admins')
+                .select('*')
+                .eq('id', adminId)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                document.getElementById('adminFullName').value = data.full_name || '';
+                document.getElementById('adminUsername').value = data.username || '';
+
+                // Update avatar if it exists in the header
+                const avatar = document.querySelector('.admin-avatar');
+                if (avatar) {
+                    const initials = (data.full_name || data.username || 'AD').substring(0, 2).toUpperCase();
+                    avatar.textContent = initials;
+                }
+            }
+        } catch (e) {
+            console.error("Error loading admin info:", e);
+        }
+    }
+
+    loadAdminInfo();
+
+    // --- 3. Update Profile ---
+    const btnUpdateProfile = document.getElementById('btnUpdateProfile');
+    if (btnUpdateProfile) {
+        btnUpdateProfile.addEventListener('click', async () => {
+            const fullName = document.getElementById('adminFullName').value.trim();
+            if (!fullName) return showAlert('warning', window.i18n('ph_enter_fullname', 'Please enter your full name.'));
+
+            const originalText = btnUpdateProfile.textContent;
+            btnUpdateProfile.textContent = window.i18n('lbl_updating', 'Updating...');
+            btnUpdateProfile.disabled = true;
+
+            try {
+                const adminAuthStr = sessionStorage.getItem('admin_auth');
+                const adminData = JSON.parse(adminAuthStr);
+                const adminId = parseInt(adminData.id);
+
+                const { error } = await client
+                    .from('admins')
+                    .update({ full_name: fullName })
+                    .eq('id', adminId);
+
+                if (error) throw error;
+
+                showAlert('success', window.i18n('msg_success', 'Profile updated successfully.'));
+                loadAdminInfo(); // Refresh avatar etc.
+
+            } catch (e) {
+                console.error(e);
+                showAlert('error', window.i18n('err_updating', 'Error updating profile: ') + e.message);
+            } finally {
+                btnUpdateProfile.textContent = originalText;
+                btnUpdateProfile.disabled = false;
+            }
+        });
+    }
 
     // --- 4. Update Password ---
     // Make sure we select the button correctly. 
@@ -63,6 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnUpdatePass) {
         btnUpdatePass.addEventListener('click', async () => {
+            const currentPass = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;
             const confirmPass = document.getElementById('confirmPassword').value;
 
@@ -70,6 +139,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (newPass !== confirmPass) return showAlert('warning', window.i18n('err_passwords_no_match', "Passwords do not match."));
             if (newPass.length < 6) return showAlert('warning', window.i18n('err_password_6chars', "Password must be at least 6 characters."));
 
+            // Note: In this specific implementation, we don't strictly verify 'currentPass' against DB here 
+            // as the 'admins' table is simpler. But we could add it if needed.
+
+            const originalText = btnUpdatePass.textContent;
             btnUpdatePass.textContent = window.i18n('lbl_updating', 'Updating...');
             btnUpdatePass.disabled = true;
 
@@ -108,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (error) {
                     if (error.message.includes('Could not find the table')) {
-                        throw new Error(window.i18n('err_table_missing', "The 'admins' table is missing in your Supabase database. Please run the SQL patch in 'create_admins_table.sql' to create it."));
+                        throw new Error(window.i18n('err_table_missing', "The 'admins' table is missing in your Supabase database."));
                     }
                     throw error;
                 }
@@ -116,7 +189,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showAlert('success', window.i18n('msg_password_updated', "Password updated successfully."));
 
                 // Clear inputs
-                document.getElementById('currentPassword').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
 
@@ -124,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error(e);
                 showAlert('error', window.i18n('err_updating_password', "Error updating password: ") + e.message);
             } finally {
-                btnUpdatePass.textContent = window.i18n('btn_update_password', 'Update Password');
+                btnUpdatePass.textContent = originalText;
                 btnUpdatePass.disabled = false;
             }
         });
