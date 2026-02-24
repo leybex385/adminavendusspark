@@ -149,6 +149,12 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
         if (fetchErr || !trade) throw new Error("Could not find the original trade record.");
         if (trade.status === 'Sold') throw new Error("This position is already closed.");
 
+        // IPO LOCKUP GUARD
+        const lockupUntil = trade.lockup_until ? new Date(trade.lockup_until) : null;
+        if (lockupUntil && lockupUntil > new Date()) {
+            throw new Error(`This position is under lock-up until ${lockupUntil.toLocaleDateString('en-IN')}. Selling is disabled until then.`);
+        }
+
         // --- TRADING FREEZE GUARD ---
         if (user.trading_frozen) {
             throw new Error("Trading functions are temporarily unavailable. Please check your account status or try again later.");
@@ -169,8 +175,10 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
 
         // 3. Update the original trade to 'Sold' with historical data
         const realisedProfit = finalNetReturn - buyAmount;
+        const finalisedNote = `Sold at Market ₹${finalSellPrice.toLocaleString('en-IN')} @ ${new Date().toLocaleTimeString('en-IN')}`;
         const { error: tradeUpdateErr } = await client.from('trades').update({
             status: 'Sold',
+            order_status: 'CLOSED',
             processed_at: new Date().toISOString(),
             sell_price: finalSellPrice,
             total_sale_value: finalNetReturn,
@@ -178,7 +186,7 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
             sell_timestamp: new Date().toISOString(),
             sell_tax: tax,
             sell_fees: txn,
-            admin_note: `Sold at Market ₹${finalSellPrice.toLocaleString('en-IN')}`
+            admin_note: finalisedNote
         }).eq('id', tradeId);
         if (tradeUpdateErr) throw tradeUpdateErr;
 
@@ -194,6 +202,7 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
             tax_amount: tax,
             txn_charge: txn,
             status: 'Sold',
+            order_status: 'CLOSED',
             processed_at: new Date().toISOString(),
             admin_note: `Proceeds from selling ${qty} shares of ${trade.symbol}`
         }]);
@@ -332,7 +341,7 @@ window.openOTCSubscribeModal = function (productId) {
 
         const color = (product.change >= 0 || product.type !== 'stock') ? '#10b981' : '#ef4444';
 
-        window.openStockDetail(product.symbol, product.name, exchange, priceStr, changeStr, color, product.type);
+        window.openStockDetail(product.symbol, product.name, exchange, priceStr, changeStr, color, product.type, true, product.id, product.minInvest);
     } else {
         console.error("openStockDetail not defined on this page");
     }

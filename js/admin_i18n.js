@@ -11,6 +11,8 @@
             "sidebar_users": "客户管理",
             "sidebar_bank_accounts": "银行账户",
             "sidebar_products": "产品管理",
+            "lang_cn": "中文",
+            "lang_en": "英文",
             "sidebar_stock057": "机构股票057",
             "sidebar_financial": "财务管理",
             "sidebar_deposits": "充值记录",
@@ -47,6 +49,7 @@
             "title_loans": "贷款申请记录",
             "title_products": "产品配置管理",
             "title_settings": "账户安全设置",
+            "title_profile": "个人资料设置",
             "title_admin_centers": "管理员配置中心",
             "title_financial_overview": "财务数据概览",
             "lbl_dashboard_summary": "仪表盘汇总",
@@ -136,6 +139,7 @@
             "th_asset": "交易资产",
             "th_volume": "成交量",
             "th_ipo_name": "申购名称",
+            "th_lockup_info": "锁定期信息",
             "th_date": "日期",
             "th_type": "交易类型",
             "th_qty": "数量",
@@ -165,6 +169,7 @@
             "btn_update": "更新",
             "btn_save": "保存",
             "btn_send": "发送",
+            "btn_save_profile": "更新资料",
             "btn_add": "添加",
             "btn_next": "下一步",
             "btn_agree_continue": "同意并继续",
@@ -225,6 +230,7 @@
             "lbl_end_sub": "结束认购",
             "lbl_allocation_price": "配售价格",
             "lbl_min_invest": "最低投资",
+            "lbl_lockup_days": "锁定期 (天)",
             "lbl_max_invest": "最高投资",
             "lbl_enable_premium": "启用高溢价产品",
             "lbl_product_details": "产品详情",
@@ -443,7 +449,25 @@
             "btn_logout": "退出登录",
             "msg_loan_eligibility_enabled": "用户贷款权限已启用。",
             "msg_loan_eligibility_disabled": "用户贷款权限已禁用。",
-            "lbl_delete": "删除"
+            "lbl_delete": "删除",
+            "lbl_lockup": "锁定管理",
+            "lbl_lockup_mgmt": "IPO 锁定管理",
+            "lbl_current_expiry": "当前到期日",
+            "lbl_ipo_approval": "IPO 订单审批",
+            "lbl_additional_lockup": "额外锁定期 (天)",
+            "lbl_extend": "延长",
+            "lbl_set_exact_expiry": "设置精确到期日",
+            "lbl_set_date": "确认日期",
+            "lbl_force_unlock": "强制解锁 (覆盖)",
+            "lbl_locked_until": "锁定至",
+            "lbl_lock_expired": "锁定已过期",
+            "lbl_not_set": "未设置",
+            "lbl_na": "无",
+            "status_locked": "已锁定",
+            "status_unlocked": "已解锁",
+            "err_invalid_qty": "请输入有效的批准数量。",
+            "msg_confirm_reject_trade": "您确定要驳回这笔交易吗？",
+            "lbl_confirm_reject": "确认驳回"
         },
         en: {
             // Sidebar
@@ -451,7 +475,9 @@
             "sidebar_kyc": "KYC Auth",
             "sidebar_users": "Users",
             "sidebar_bank_accounts": "Bank Accounts",
-            "sidebar_products": "Products",
+            "sidebar_products": "Product Management",
+            "lang_cn": "Chinese",
+            "lang_en": "English",
             "sidebar_stock057": "Stock 057",
             "sidebar_financial": "Financial",
             "sidebar_deposits": "Deposits",
@@ -488,6 +514,7 @@
             "title_loans": "Loan Application Records",
             "title_products": "Product Management",
             "title_settings": "Account Security",
+            "title_profile": "Profile Settings",
             "title_admin_centers": "Admin Configurations",
             "title_financial_overview": "Financial Overview",
             "lbl_dashboard_summary": "Dashboard Summary",
@@ -577,6 +604,7 @@
             "th_asset": "Asset",
             "th_volume": "Volume",
             "th_ipo_name": "IPO Name",
+            "th_lockup_info": "Lock-up Info",
             "th_date": "Date",
             "th_type": "Type",
             "th_qty": "Qty",
@@ -606,6 +634,7 @@
             "btn_update": "Update",
             "btn_save": "Save",
             "btn_send": "Send",
+            "btn_save_profile": "Update Profile",
             "btn_add": "Add New",
             "btn_next": "Next",
             "btn_agree_continue": "Agree & Continue",
@@ -666,6 +695,7 @@
             "lbl_end_sub": "End Subscription",
             "lbl_allocation_price": "Allocation Price",
             "lbl_min_invest": "Minimum Investment",
+            "lbl_lockup_days": "Lock-up Period (Days)",
             "lbl_max_invest": "Maximum Investment",
             "lbl_enable_premium": "Enable High Premium Product",
             "lbl_product_details": "Product Details",
@@ -748,6 +778,7 @@
             "lbl_frozen": "FROZEN",
             "lbl_review": "Review",
             "lbl_balance": "Balance",
+            "lbl_lockup": "Lock-up",
 
             // Login Page
             "admin_portal": "Admin Login Portal",
@@ -884,7 +915,25 @@
             "btn_logout": "Logout",
             "msg_loan_eligibility_enabled": "User loan eligibility enabled successfully.",
             "msg_loan_eligibility_disabled": "User loan eligibility disabled successfully.",
-            "lbl_delete": "Delete"
+            "lbl_delete": "Delete",
+            "lbl_lockup": "Lock-up",
+            "lbl_lockup_mgmt": "IPO Lock-up Management",
+            "lbl_current_expiry": "Current Expiry",
+            "lbl_ipo_approval": "IPO Order Approval",
+            "lbl_additional_lockup": "Additional Lock-up Days",
+            "lbl_extend": "Extend",
+            "lbl_set_exact_expiry": "Set Exact Expiry Date",
+            "lbl_set_date": "Set Date",
+            "lbl_force_unlock": "Force Unlock (Override)",
+            "lbl_locked_until": "Locked Until",
+            "lbl_lock_expired": "Lock Expired",
+            "lbl_not_set": "Not Set",
+            "lbl_na": "N/A",
+            "status_locked": "Locked",
+            "status_unlocked": "Unlocked",
+            "err_invalid_qty": "Please enter a valid approved quantity.",
+            "msg_confirm_reject_trade": "Are you sure you want to REJECT this trade?",
+            "lbl_confirm_reject": "Confirm Reject"
         }
     };
 
@@ -920,6 +969,12 @@
                     } else {
                         el.innerText = dict[key];
                     }
+                }
+
+                // Handle title attribute if it exists
+                if (el.hasAttribute('title') || el.title) {
+                    const titleKey = el.getAttribute('data-i18n-title') || key;
+                    if (dict[titleKey]) el.title = dict[titleKey];
                 }
             }
         });
