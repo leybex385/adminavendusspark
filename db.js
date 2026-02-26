@@ -88,7 +88,9 @@ window.DB = {
         const insertData = {
             password,
             balance: 0,
+            frozen: 0,
             invested: 0,
+            outstanding: 0,
             kyc: 'Pending'
         };
 
@@ -276,7 +278,7 @@ window.DB = {
 
         const { data, error } = await client
             .from('users')
-            .select('*')
+            .select('id, mobile, username, kyc, credit_score, vip, balance, invested, frozen, outstanding, full_name, id_number, address, loan_enabled, created_at, csr_id, invitation_code')
             .eq('id', user.id)
             .single();
 
@@ -820,7 +822,7 @@ window.DB = {
     async getUsers() {
         const client = this.getClient();
         const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
-        let query = client.from('users').select('*').or('is_deleted.is.null,is_deleted.eq.false');
+        let query = client.from('users').select('id, mobile, username, kyc, credit_score, vip, balance, invested, frozen, outstanding, full_name, created_at, csr_id, invitation_code').or('is_deleted.is.null,is_deleted.eq.false');
 
         if (auth.role === 'csr') {
             if (auth.invitation_code) {
@@ -1078,9 +1080,11 @@ window.DB = {
             const newBalance = arguments[1];
             const newInvested = arguments[2];
             const newOutstanding = arguments[3];
+            const newFrozen = arguments[4];
             updates = { balance: newBalance };
             if (newInvested !== undefined) updates.invested = newInvested;
             if (newOutstanding !== undefined) updates.outstanding = newOutstanding;
+            if (newFrozen !== undefined) updates.frozen = newFrozen;
         }
 
         const { data, error } = await client
@@ -1094,6 +1098,111 @@ window.DB = {
         }
 
         return { success: !error, data, error };
+    },
+
+    // --- SUBSCRIPTION WALLET TRANSITIONS ---
+
+    // --- SUBSCRIPTION WALLET TRANSITIONS (ATOMIC RPC DEPLOYMENT) ---
+
+    // STAGE 1: Submit Subscription (Deduct Balance, Increase Frozen, Create Trade ATOMICALLY)
+    async submitSubscriptionAtomic(tradeData) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+
+        const { data, error } = await client.rpc('submit_subscription_atomic', {
+            p_user_id: tradeData.user_id,
+            p_trade_data: tradeData
+        });
+
+        if (error) {
+            console.error("RPC submit_subscription_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        if (data && data.success === false) {
+            return { success: false, error: data.error };
+        }
+        return data;
+    },
+
+    // STAGE 2: Admin Approve (Deduct Frozen, Increase Invested, Mark Settled ATOMICALLY)
+    async approveSubscriptionAtomic(tradeId, approvedQty, authId, authRole) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+
+        const { data, error } = await client.rpc('approve_subscription_atomic', {
+            p_trade_id: parseInt(tradeId),
+            p_approved_qty: parseFloat(approvedQty),
+            p_auth_id: parseInt(authId),
+            p_auth_role: authRole
+        });
+
+        if (error) {
+            console.error("RPC approve_subscription_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        if (data && data.success === false) {
+            return { success: false, error: data.error };
+        }
+        return data;
+    },
+
+    // STAGE 3: Admin Reject (Deduct Frozen, Return to Balance, Mark Rejected ATOMICALLY)
+    async rejectSubscriptionAtomic(tradeId, authId, authRole) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+
+        const { data, error } = await client.rpc('reject_subscription_atomic', {
+            p_trade_id: parseInt(tradeId),
+            p_auth_id: parseInt(authId),
+            p_auth_role: authRole
+        });
+
+        if (error) {
+            console.error("RPC reject_subscription_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        if (data && data.success === false) {
+            return { success: false, error: data.error };
+        }
+        return data;
+    },
+
+    // Fallback legacy methods (Modified to handle direct errors better)
+    async submitSubscriptionStage1(userId, amount) {
+        const client = this.getClient();
+        if (!client) return { success: false };
+        const { data, error } = await client.from('users').select('balance, frozen').eq('id', userId).single();
+        if (!user) return { success: false, message: 'User not found' };
+        const currentBalance = parseFloat(user.balance) || 0;
+        const currentFrozen = parseFloat(user.frozen) || 0;
+        if (currentBalance < amount) return { success: false, message: 'Insufficient balance' };
+        const { error: upErr } = await client.from('users').update({
+            balance: currentBalance - amount,
+            frozen: currentFrozen + amount
+        }).eq('id', userId);
+        return { success: !upErr, error: upErr };
+    },
+    async approveSubscriptionStage2(userId, amount) {
+        const client = this.getClient();
+        if (!client) return { success: false };
+        const { data: user } = await client.from('users').select('frozen, invested').eq('id', userId).single();
+        if (!user) return { success: false };
+        const { error } = await client.from('users').update({
+            frozen: Math.max(0, (parseFloat(user.frozen) || 0) - amount),
+            invested: (parseFloat(user.invested) || 0) + amount
+        }).eq('id', userId);
+        return { success: !error, error };
+    },
+    async rejectSubscriptionStage3(userId, amount) {
+        const client = this.getClient();
+        if (!client) return { success: false };
+        const { data: user } = await client.from('users').select('balance, frozen').eq('id', userId).single();
+        if (!user) return { success: false };
+        const { error } = await client.from('users').update({
+            balance: (parseFloat(user.balance) || 0) + amount,
+            frozen: Math.max(0, (parseFloat(user.frozen) || 0) - amount)
+        }).eq('id', userId);
+        return { success: !error, error };
     },
 
     // --- PRODUCT MANAGEMENT ---
@@ -1111,6 +1220,28 @@ window.DB = {
 
         if (error) {
             console.error("Error fetching products:", error);
+            return [];
+        }
+        return data || [];
+    },
+
+    async getActiveProductsByType(type) {
+        const client = this.getClient();
+        if (!client) return [];
+
+        let query = client.from('products').select('*').eq('status', 'Active');
+        
+        if (type === 'IPO') {
+            // For IPO, match explicit 'IPO' or catch legacy nulls/empties
+            query = query.or('product_type.eq.IPO,product_type.is.null');
+        } else if (type === 'OTC') {
+            query = query.eq('product_type', 'OTC');
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) {
+            console.error(`Error fetching ${type} products:`, error);
             return [];
         }
         return data || [];
@@ -1295,41 +1426,89 @@ window.DB = {
 
     async updateLoanStatus(id, status, payload = {}) {
         const client = this.getClient();
-        if (!client) return { success: false };
-        const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
-        const isCsr = auth.role === 'csr';
+        if (!client) return { success: false, error: { message: "Database client not available" } };
 
-        // Fetch loan with left join instead of restrictive inner join
-        const { data: loan, error: fetchErr } = await client.from('loans').select('*, users(*)').eq('id', id).single();
-        if (fetchErr || !loan) return { success: false, message: 'Loan not found' };
+        const adminAuth = sessionStorage.getItem('admin_auth');
+        if (!adminAuth) return { success: false, error: { message: "Admin session not found" } };
 
-        // Ownership/Role Check (Applied after resilient fetch)
-        if (isCsr) {
-            const u = loan.users;
-            const hasCsrIdMatch = u?.csr_id == auth.id;
-            const hasInvCodeMatch = auth.invitation_code && u?.invitation_code === auth.invitation_code;
-            if (!hasCsrIdMatch && !hasInvCodeMatch) {
-                return { success: false, error: { message: "Unauthorized Scope Violation" } };
-            }
+        const auth = JSON.parse(adminAuth);
+        const adminId = parseInt(auth.id);
+        const loanId = parseInt(id);
+
+        if (isNaN(adminId)) return { success: false, error: { message: "Invalid Admin ID in session" } };
+        if (isNaN(loanId)) return { success: false, error: { message: "Invalid Loan ID" } };
+
+        console.log("DB: Executing secure loan operation:", { loanId, status, adminId, role: auth.role });
+
+        // Call the secure RPC to handle ownership check and updates in the backend
+        const { data, error } = await client.rpc('operate_loan_secure', {
+            p_loan_id: loanId,
+            p_status: status,
+            p_admin_note: payload.admin_note || '',
+            p_approved_amount: parseFloat(payload.amount) || 0,
+            p_repayment_terms: payload.repayment_terms || '',
+            p_eligibility: payload.loan_enabled !== undefined ? payload.loan_enabled : true,
+            p_admin_id: adminId,
+            p_admin_role: auth.role
+        });
+
+        if (error) {
+            console.error("RPC operate_loan_secure Error:", error);
+            return { success: false, error: error };
         }
 
-        const updateData = {
-            status: status.toUpperCase(),
-            amount: payload.amount !== undefined ? payload.amount : loan.amount,
-            admin_note: payload.admin_note || '',
-            repayment_terms: payload.repayment_terms || loan.repayment_terms || '',
-            processed_at: new Date().toISOString()
-        };
+        if (!data) return { success: false, error: { message: "No response from server" } };
 
-        const { error } = await client
-            .from('loans')
-            .update(updateData)
-            .eq('id', id);
+        // Handle string errors from backend to ensure res.error.message works in UI
+        if (data.success === false && typeof data.error === 'string') {
+            return { success: false, error: { message: data.error }, data };
+        }
 
-        return { success: !error, error };
+        return { success: data.success, error: data.error, data: data };
+    },
+
+    async markLoanAsRepaid(id) {
+        const client = this.getClient();
+        if (!client) return { success: false, error: { message: "Database client not available" } };
+
+        const adminAuth = sessionStorage.getItem('admin_auth');
+        if (!adminAuth) return { success: false, error: { message: "Admin session not found" } };
+
+        const auth = JSON.parse(adminAuth);
+        const adminId = parseInt(auth.id);
+        const loanId = parseInt(id);
+
+        if (isNaN(adminId)) return { success: false, error: { message: "Invalid Admin ID in session" } };
+        if (isNaN(loanId)) return { success: false, error: { message: "Invalid Loan ID" } };
+
+        console.log("DB: Marking loan as fully repaid:", { loanId, adminId, role: auth.role });
+
+        const { data, error } = await client.rpc('repay_loan_secure', {
+            p_loan_id: loanId,
+            p_admin_id: adminId,
+            p_admin_role: auth.role
+        });
+
+        if (error) {
+            console.error("RPC repay_loan_secure Error:", error);
+            return { success: false, error: error };
+        }
+
+        if (!data) return { success: false, error: { message: "No response from server" } };
+
+        if (data.success === false && typeof data.error === 'string') {
+            return { success: false, error: { message: data.error }, data };
+        }
+
+        return { success: data.success, error: data.error, data: data };
     },
 
     async update_user_loan_eligibility(userId, enabled) {
+        // Since we now have a secure RPC for loan operations that can also toggle eligibility,
+        // we could call it if this was related to a loan. 
+        // For general eligibility toggle, we can use a separate RPC or just keep the client-side check if RLS allows it on 'users' table.
+        // However, the user asked to enforce scope in backend.
+
         const client = this.getClient();
         const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
         const isCsr = auth.role === 'csr';

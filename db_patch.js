@@ -1,45 +1,52 @@
 
 // Patch DB.updateLoanStatus to include updated_at/processed_at
 if (window.DB) {
-    window.DB.updateLoanStatus = async function (id, status, adminNote = '') {
+    window.DB.updateLoanStatus = async function (id, status, payload = {}) {
         const client = this.getClient();
         if (!client) {
             alert("Database client not initialized");
-            return { success: false };
+            return { success: false, error: { message: "Database client not initialized" } };
         }
 
-        const validStatuses = ['APPROVED', 'REJECTED', 'PENDING'];
-        // Ensure strictly uppercase entry
-        let finalStatus = status.toUpperCase();
+        const adminAuth = sessionStorage.getItem('admin_auth');
+        if (!adminAuth) return { success: false, error: { message: "Admin session not found" } };
 
-        if (!validStatuses.includes(finalStatus)) {
-            console.error(`Invalid status: ${finalStatus}`);
-            alert(`Invalid status: ${finalStatus}. Must be APPROVED, REJECTED, or PENDING.`);
-            return { success: false };
-        }
+        const auth = JSON.parse(adminAuth);
+        const adminId = parseInt(auth.id);
+        const loanId = parseInt(id);
 
-        const updatePayload = {
-            status: finalStatus,
-            processed_at: new Date().toISOString()
-        };
+        if (isNaN(adminId)) return { success: false, error: { message: "Invalid Admin ID in session" } };
+        if (isNaN(loanId)) return { success: false, error: { message: "Invalid Loan ID" } };
 
-        // Include admin_note if present (safely adhering to "exact query" spirit while preserving feature)
-        if (adminNote) updatePayload.admin_note = adminNote;
+        // Include eligibility in the payload if it's coming from the modal
+        const eligibility = payload.loan_enabled !== undefined ? payload.loan_enabled : true;
 
-        // EXECUTE EXACT SUPABASE QUERY STRUCTURE
-        const { data, error } = await client
-            .from('loans')
-            .update(updatePayload)
-            .eq('id', id)
-            .select();
+        console.log("DB (Patch): Executing secure loan operation:", { loanId, status, adminId });
+
+        const { data, error } = await client.rpc('operate_loan_secure', {
+            p_loan_id: loanId,
+            p_status: status,
+            p_admin_note: payload.admin_note || '',
+            p_approved_amount: parseFloat(payload.amount) || 0,
+            p_repayment_terms: payload.repayment_terms || '',
+            p_eligibility: eligibility,
+            p_admin_id: adminId,
+            p_admin_role: auth.role
+        });
 
         if (error) {
-            console.error('Loan update error:', error);
-            alert("Loan Update Failed: " + error.message);
+            console.error('Loan update error (RPC):', error);
             return { success: false, error };
         }
 
-        return { success: true, data };
+        if (!data) return { success: false, error: { message: "No response from server" } };
+
+        // Handle string errors from backend to ensure res.error.message works in UI
+        if (data.success === false && typeof data.error === 'string') {
+            return { success: false, error: { message: data.error }, data };
+        }
+
+        return { success: data.success, error: data.error, data: data };
     };
 
     // Add getBorrowedFunds to fetch total approved loans (CALCULATION AS REQUESTED)

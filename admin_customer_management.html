@@ -2320,6 +2320,12 @@
                         Product</button>
                 </div>
 
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="vsl-btn active" id="btn_product_ipo" onclick="setProductFilter('IPO')">[ IPO
+                        ]</button>
+                    <button class="vsl-btn" id="btn_product_otc" onclick="setProductFilter('OTC')">[ OTC ]</button>
+                </div>
+
                 <div class="pm-card">
                     <div class="vsl-table-wrap">
                         <table class="pm-table">
@@ -2642,6 +2648,10 @@
                         <span style="color:#64748b;" data-i18n="th_requested">Requested</span>
                         <span id="otm_req_qty" style="font-weight:700;">0</span>
                     </div>
+                    <div id="otm_req_amt_group" style="display:none; justify-content:space-between;">
+                        <span style="color:#64748b;" data-i18n="lbl_requested">Requested Amount</span>
+                        <span id="otm_req_amt" style="font-weight:700; color:#d4af37;">₹0.00</span>
+                    </div>
                     <div
                         style="display:flex; justify-content:space-between; border-top:1px solid #e2e8f0; padding-top:8px;">
                         <span style="color:#64748b;" data-i18n="lbl_balance">Wallet Balance</span>
@@ -2793,9 +2803,16 @@
                     </div>
                 </div>
 
-                <div class="kyc-form-group" style="margin-top:15px;">
-                    <label style="font-weight:600;" data-i18n="lbl_admin_note">Admin Internal Note</label>
-                    <input type="text" id="olm_admin_note" class="kyc-input" placeholder="Reason for adjustment/terms">
+                <div class="kyc-form-group">
+                    <label data-i18n="lbl_admin_note">Admin Internal Note</label>
+                    <textarea id="olm_admin_note" rows="2"
+                        style="width:100%; border:1px solid #e2e8f0; border-radius:8px; padding:8px;"></textarea>
+                </div>
+
+                <div style="margin-top:20px; border-top: 1px dashed #e2e8f0; padding-top:15px;">
+                    <button class="vsl-btn" id="btn_mark_repaid"
+                        style="width:100%; background:#10b981; color:white; font-weight:700; border:none; height:45px; border-radius:8px; display:none;"
+                        onclick="processMarkRepaid()" data-i18n="btn_mark_fully_repaid">Mark as Fully Repaid</button>
                 </div>
             </div>
             <div class="kyc-modal-footer" style="display:flex; gap:12px;">
@@ -2876,6 +2893,24 @@
         </div>
     </div>
 
+    <!-- LOAN REPAYMENT CONFIRMATION MODAL -->
+    <div id="loanRepayConfirmModal" class="confirm-modal-overlay">
+        <div class="confirm-modal-card">
+            <div class="confirm-modal-icon-box" style="background:#ecfdf5; color:#10b981;">
+                <i data-lucide="help-circle" size="44"></i>
+            </div>
+            <h3 class="confirm-modal-title" data-i18n="title_confirm_repayment">Confirm Loan Repayment</h3>
+            <p class="confirm-modal-message" data-i18n="msg_confirm_repayment">Are you sure you want to mark this loan
+                as fully repaid?</p>
+            <div class="confirm-modal-footer">
+                <button class="confirm-modal-btn cancel" onclick="closeLoanRepayConfirmModal()"
+                    data-i18n="btn_cancel">Cancel</button>
+                <button id="lrConfirmBtn" class="confirm-modal-btn delete" style="background:#10b981;"
+                    onclick="executeRepayment()" data-i18n="btn_confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Updated showConfirm with dynamic title
         function showConfirm(msg, onConfirm, title = "modal_confirm_action", btnType = "btn_confirm") {
@@ -2913,6 +2948,21 @@
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
+        }
+
+        function openLoanRepayConfirmModal() {
+            const modal = document.getElementById('loanRepayConfirmModal');
+            window._pendingRepayLoanId = document.getElementById('olm_loan_id').value;
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            if (window.applyLanguage) window.applyLanguage(localStorage.getItem('admin_lang') || 'cn');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function closeLoanRepayConfirmModal() {
+            const modal = document.getElementById('loanRepayConfirmModal');
+            modal.classList.remove('active');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
         }
 
 
@@ -3411,6 +3461,23 @@
                 document.getElementById('otm_user_info').innerText = `${trade.users.mobile || trade.users.username || 'User'} (ID: ${trade.users.id})`;
                 document.getElementById('otm_prod_info').innerText = `${trade.name} (${trade.symbol})`;
                 document.getElementById('otm_req_qty').innerText = trade.requested_quantity || trade.quantity || 0;
+
+                // IPO Refactor: View Requested Amount
+                const isIPO = trade.type?.toLowerCase() === 'ipo';
+                const reqAmtGroup = document.getElementById('otm_req_amt_group');
+                const reqQtyGroup = document.getElementById('otm_req_group');
+
+                if (isIPO) {
+                    if (reqAmtGroup) {
+                        reqAmtGroup.style.display = 'flex';
+                        document.getElementById('otm_req_amt').innerText = '₹' + parseFloat(trade.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    }
+                    if (reqQtyGroup) reqQtyGroup.style.display = 'none';
+                } else {
+                    if (reqAmtGroup) reqAmtGroup.style.display = 'none';
+                    if (reqQtyGroup) reqQtyGroup.style.display = 'flex';
+                }
+
                 document.getElementById('otm_user_balance').innerText = `₹${parseFloat(trade.users.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
                 document.getElementById('otm_approved_qty').value = trade.requested_quantity || trade.quantity || 1;
 
@@ -3469,10 +3536,18 @@
                     if (lockupControls) {
                         lockupControls.style.display = (auth.role === 'super_admin' || auth.role === 'csr') ? 'flex' : 'none';
                     }
+
+                    // IPO Refactor: CSR can approve (User Request)
+                    const approveBtn = document.querySelector('[onclick="handleTradeFromOperateModal(\'Settled\')"]');
+                    if (approveBtn) approveBtn.style.display = 'block';
                 } else {
                     if (lockupSection) lockupSection.style.display = 'none';
                     if (approvedGroup) approvedGroup.style.display = 'block';
                     if (footer) footer.style.display = 'flex';
+
+                    // Restore approve button for non-IPO
+                    const approveBtn = document.querySelector('[onclick="handleTradeFromOperateModal(\'Settled\')"]');
+                    if (approveBtn) approveBtn.style.display = 'block';
                 }
 
                 lucide.createIcons();
@@ -3745,7 +3820,7 @@
 
             // Render Dashboard Stats
             const pendingKycCount = allUsers.filter(x => x.kyc === 'Pending').length;
-            const pendingTradesCount = tradesData.filter(t => t.status === 'Pending').length;
+            const pendingTradesCount = tradesData.filter(t => t.status === 'Pending' || t.status === 'Awaiting').length;
 
             const s = stats; // Short alias
 
@@ -3982,9 +4057,9 @@
             renderMessages(filtered);
 
             // Process Trades
-            const stocks = tradesData.filter(t => t.type === 'stock');
-            const otcTrades = tradesData.filter(t => t.type === 'otc');
-            const ipos = tradesData.filter(t => t.type === 'ipo');
+            const stocks = tradesData.filter(t => (t.type || '').toLowerCase() === 'stock');
+            const otcTrades = tradesData.filter(t => (t.type || '').toLowerCase() === 'otc');
+            const ipos = tradesData.filter(t => (t.type || '').toLowerCase() === 'ipo');
 
             if (stocks) {
                 const stockTbody = document.getElementById('stockList');
@@ -4180,13 +4255,14 @@
                     if (sUpper === 'APPROVED') sStyle = 'background:#dcfce7; color:#166534;';
                     else if (sUpper === 'REJECTED') sStyle = 'background:#fee2e2; color:#991b1b;';
                     else if (sUpper === 'PENDING') sStyle = 'background:#fef3c7; color:#92400e;';
+                    else if (sUpper === 'REPAID' || sUpper === 'REPAID') sStyle = 'background:#e0f2fe; color:#0369a1;';
 
                     const joinedUser = x.users;
                     const fallbackUser = allUsers.find(u => String(u.id) === String(x.user_id));
                     const finalUser = joinedUser || fallbackUser;
 
                     const uName = finalUser ? (finalUser.full_name || finalUser.username || finalUser.mobile) : window.i18n('th_user', 'User');
-                    const displayStatus = sUpper;
+                    const displayStatus = window.i18n(`status_${rawStatus.toLowerCase()}`, sUpper);
 
                     return `
                     <tr>
@@ -5395,6 +5471,39 @@
             init();
         }
 
+        function processMarkRepaid() {
+            const loanId = document.getElementById('olm_loan_id').value;
+            if (!loanId) return;
+            window._pendingRepayLoanId = loanId;
+            openLoanRepayConfirmModal();
+        }
+
+        async function executeRepayment() {
+            const loanId = window._pendingRepayLoanId;
+            if (!loanId) return;
+
+            showLoader(true);
+            try {
+                const res = await window.DB.markLoanAsRepaid(loanId);
+                if (res.success) {
+                    showAlert('success', "Loan marked as fully repaid.", "Payment Successful");
+                    closeLoanRepayConfirmModal();
+                    closeLoanOperateModal();
+                    init(); // Refresh table
+                } else {
+                    console.error("Repayment Error:", res.error);
+                    showAlert('error', res.error?.message || "Failed to mark loan as repaid.", "Operation Failed");
+                    closeLoanRepayConfirmModal(); // Close confirmation even on error so user can see error alert
+                }
+            } catch (e) {
+                console.error(e);
+                showAlert('error', e.message, "System Error");
+                closeLoanRepayConfirmModal();
+            } finally {
+                showLoader(false);
+            }
+        }
+
         function openDepositModal(uid, uname) {
             document.getElementById('dep_id').value = '';
             document.getElementById('dep_user_id').value = uid;
@@ -5691,8 +5800,48 @@
                     const price = parseFloat(trade.price) || 0;
                     const amount = finalQty * price;
 
-                    // --- WALLET STATE TRANSITION: STAGE 2 (ATOMIC IPO/OTC) ---
-                    if (['otc', 'ipo'].includes((trade.type || "").toLowerCase())) {
+                    // IPO Refactor: Allocation Approval (CSR authorized - User Request)
+                    if (trade.type?.toLowerCase() === 'ipo') {
+                        if (!['super_admin', 'csr'].includes(auth.role)) throw new Error("Unauthorized to approve IPO allocations.");
+
+                        const issuePrice = parseFloat(product?.allocation_price || product?.price || trade.price) || 0;
+                        const finalAllocation = finalQty * issuePrice;
+                        const userBalance = parseFloat(trade.users.balance) || 0;
+
+                        if (userBalance < finalAllocation) throw new Error(`Insufficient user balance! Required: ₹${finalAllocation.toLocaleString()}, Available: ₹${userBalance.toLocaleString()}`);
+
+                        const lockupDays = product ? parseInt(product.lockup_period || 0) : 0;
+                        const lockupUntil = lockupDays > 0 ? new Date(Date.now() + lockupDays * 24 * 60 * 60 * 1000).toISOString() : null;
+
+                        const updates = {
+                            balance: userBalance - finalAllocation
+                        };
+
+                        // Point 5: Move to frozen OR invested (based on lockup logic)
+                        if (lockupUntil) {
+                            updates.frozen = (parseFloat(trade.users.frozen) || 0) + finalAllocation;
+                        } else {
+                            updates.invested = (parseFloat(trade.users.invested) || 0) + finalAllocation;
+                        }
+
+                        const { error: uErr } = await client.from('users').update(updates).eq('id', trade.user_id);
+                        if (uErr) throw uErr;
+
+                        const { error: upTradeErr } = await client.from('trades').update({
+                            status: 'Holding',
+                            approved_quantity: finalQty, // Point 5: Save approved_quantity
+                            quantity: finalQty,
+                            price: issuePrice,
+                            total_amount: finalAllocation,
+                            lockup_until: lockupUntil,
+                            processed_at: new Date().toISOString(),
+                            approved_by: auth.id,
+                            approved_role: auth.role,
+                            approved_at: new Date().toISOString()
+                        }).eq('id', id);
+                        if (upTradeErr) throw upTradeErr;
+
+                    } else if (['otc', 'ipo'].includes((trade.type || "").toLowerCase())) {
                         const res = await window.DB.approveSubscriptionAtomic(id, finalQty, auth.id, auth.role);
                         if (!res.success) {
                             const errStr = res.error?.message || res.error || "Unknown Error";
@@ -5828,12 +5977,13 @@
                 available_shares: parseFloat(document.getElementById('p_shares').value) || 1000000,
                 is_premium: document.getElementById('p_premium').checked,
                 description: document.getElementById('p_desc').value,
-                type: 'IPO', // Can add selector if needed
+                product_type: document.getElementById('p_product_type') ? document.getElementById('p_product_type').value : 'IPO',
                 status: 'Active',
                 created_by: auth.id // Store creator (Instruction 3)
             };
 
             if (!p.name) { showAlert('warning', "Product Name is required!"); return; }
+            if (p.product_type !== 'IPO' && p.product_type !== 'OTC') { showAlert('warning', "Invalid Product Type! Must be IPO or OTC."); return; }
 
             showLoader(true);
             const { success, error } = await window.DB.saveProduct(p);
@@ -5848,6 +5998,16 @@
             }
         }
 
+        let currentProductFilter = 'IPO';
+        window.setProductFilter = function (type) {
+            currentProductFilter = type;
+            const ipoBtn = document.getElementById('btn_product_ipo');
+            const otcBtn = document.getElementById('btn_product_otc');
+            if (ipoBtn) ipoBtn.classList.toggle('active', type === 'IPO');
+            if (otcBtn) otcBtn.classList.toggle('active', type === 'OTC');
+            renderProducts();
+        };
+
         async function renderProducts() {
             const list = document.getElementById('productList');
             if (!list) return;
@@ -5856,7 +6016,10 @@
             const isCsr = auth.role === 'csr';
 
             // Filter if CSR (Instruction 4 & 7)
-            const dbProducts = await window.DB.getProducts(isCsr ? auth.id : null);
+            let dbProducts = await window.DB.getProducts(isCsr ? auth.id : null);
+
+            // 4. Filter by IPO vs OTC tab
+            dbProducts = dbProducts.filter(p => (p.product_type || p.type || 'IPO').toUpperCase() === currentProductFilter);
 
             if (dbProducts.length === 0) {
                 const emptyMsg = isCsr
@@ -6305,23 +6468,18 @@
             try {
                 const res = await window.DB.update_user_loan_eligibility(userId, nextStatus);
                 if (res.success) {
-                    // Re-fetch the user record from database as requested
-                    const client = window.DB.getClient();
-                    const { data: freshUser, error } = await client.from('users').select('id, balance, invested, frozen, bonus, outstanding').eq('id', userId).single();
-
-                    if (!error && freshUser) {
-                        // Update global allUsers list with fresh data
-                        const idx = allUsers.findIndex(u => String(u.id) === String(userId));
-                        if (idx !== -1) {
-                            allUsers[idx] = freshUser;
-                        }
-
-                        showAlert('success', nextStatus ? window.i18n('msg_loan_eligibility_enabled', 'enabled') : window.i18n('msg_loan_eligibility_disabled', 'disabled'));
-                    } else {
-                        showAlert('warning', "Update successful, but failed to re-fetch fresh data. Refreshing page...");
-                        setTimeout(() => location.reload(), 1500);
+                    // Update user record locally (Instruction 3)
+                    const idx = allUsers.findIndex(u => String(u.id) === String(userId));
+                    if (idx !== -1) {
+                        allUsers[idx].loan_enabled = nextStatus;
                     }
+
+                    // Re-render local list only (Instruction 3)
                     renderLoanEligibilityList();
+
+                    // Simple notification (Instruction 5)
+                    showAlert('success', window.i18n('msg_loan_eligibility_updated', 'Loan eligibility updated.'));
+                    return; // Prevent further global evaluation (Instruction 4)
                 } else {
                     showAlert('error', res.error?.message || res.error || "Failed to update eligibility.");
                 }
@@ -6351,7 +6509,7 @@
 
                 // 2. Fetch User Details Separately
                 const uid = parseInt(loan.user_id);
-                const { data: user } = await client.from('users').select('id, mobile, username, balance').eq('id', uid).single();
+                const { data: user } = await client.from('users').select('id, mobile, username, balance, csr_id, invitation_code').eq('id', uid).single();
                 loan.users = user || { username: 'Unknown', mobile: '-', credit_score: 100, loan_enabled: false };
                 console.log("DB: >>> USER DATA:", loan.users.username);
 
@@ -6404,6 +6562,19 @@
                 safeSet('olm_terms', displayTerms);
                 safeSet('olm_admin_note', displayNote);
                 safeSet('olm_eligibility', !!loan.users.loan_enabled, 'checked');
+
+                // --- MARK AS REPAID BUTTON VISIBILITY ---
+                const btnRepaid = document.getElementById('btn_mark_repaid');
+                if (btnRepaid) {
+                    const s = (loan.status || '').toLowerCase();
+                    // Shown if status is approved or Repaid (for view but disabled maybe?)
+                    // Instructions say "mark as fully repaid" for active loans.
+                    if (s === 'approved') {
+                        btnRepaid.style.display = 'block';
+                    } else {
+                        btnRepaid.style.display = 'none';
+                    }
+                }
 
                 console.log("DB: >>> POPULATING MODAL FIELDS...");
                 window._currentLoanUser = loan.users;
@@ -6461,19 +6632,12 @@
 
             showLoader(true);
 
-            // 1. Update Eligibility first
-            const eligRes = await window.DB.update_user_loan_eligibility(userId, eligibility);
-            if (!eligRes.success) {
-                showLoader(false);
-                showAlert('error', "Eligibility update failed: " + (eligRes.error?.message || eligRes.error));
-                return;
-            }
-
-            // 2. Update Loan Status & Details
+            // 1. Update Loan Status & Details (now handles eligibility and scope securely in one RPC call)
             const res = await window.DB.updateLoanStatus(id, status, {
                 amount: approvedAmount,
                 repayment_terms: terms,
-                admin_note: adminNote
+                admin_note: adminNote,
+                loan_enabled: eligibility
             });
 
             showLoader(false);
@@ -6482,7 +6646,9 @@
                 closeLoanOperateModal();
                 init(); // Refresh dashboard
             } else {
-                showAlert('error', "Operation failed: " + (res.error?.message || "Unknown error"));
+                console.error("Loan Operation Failed Response:", res);
+                const errMsg = res.error?.message || (typeof res.error === 'string' ? res.error : "Unknown error");
+                showAlert('error', "Operation failed: " + errMsg);
             }
         }
 
@@ -6515,6 +6681,13 @@
                         data-lucide="x"></i></button>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="fm-group" style="grid-column: span 2;">
+                    <label data-i18n="product_type">Product Type</label>
+                    <select id="p_product_type" class="vsl-input" required>
+                        <option value="IPO" selected>IPO</option>
+                        <option value="OTC">OTC</option>
+                    </select>
+                </div>
                 <div class="fm-group" style="grid-column: span 2;">
                     <label data-i18n="product_name">Product Name</label>
                     <input type="text" id="p_name" class="vsl-input" placeholder="e.g. Colgate-Palmolive India">
