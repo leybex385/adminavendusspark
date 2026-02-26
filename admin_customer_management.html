@@ -5827,19 +5827,40 @@
                         const { error: uErr } = await client.from('users').update(updates).eq('id', trade.user_id);
                         if (uErr) throw uErr;
 
-                        const { error: upTradeErr } = await client.from('trades').update({
+                        // IPO Fees Calculation
+                        const buyTax = finalAllocation * 0.0012;
+                        const buyTxnFee = finalAllocation * 0.0003;
+                        const totalBuyFees = buyTax + buyTxnFee;
+
+                        console.log("APPROVAL DEBUG", {
+                            tradeId: id,
+                            approvedQty: finalQty,
+                            finalAllocation
+                        });
+
+                        const updatePayload = {
                             status: 'Holding',
                             approved_quantity: finalQty, // Point 5: Save approved_quantity
                             quantity: finalQty,
                             price: issuePrice,
                             total_amount: finalAllocation,
+                            final_total_amount: finalAllocation,
+                            buy_tax: parseFloat(buyTax.toFixed(2)),
+                            buy_txn_fee: parseFloat(buyTxnFee.toFixed(2)),
+                            total_buy_fees: parseFloat(totalBuyFees.toFixed(2)),
+                            tax_amount: parseFloat(buyTax.toFixed(2)), // Fallback mapping
+                            txn_charge: parseFloat(buyTxnFee.toFixed(2)), // Fallback mapping
                             lockup_until: lockupUntil,
                             processed_at: new Date().toISOString(),
                             approved_by: auth.id,
                             approved_role: auth.role,
                             approved_at: new Date().toISOString()
-                        }).eq('id', id);
-                        if (upTradeErr) throw upTradeErr;
+                        };
+
+                        const response = await client.from('trades').update(updatePayload).eq('id', id);
+                        console.log("UPDATE RESPONSE", response);
+
+                        if (response.error) throw response.error;
 
                     } else if (['otc', 'ipo'].includes((trade.type || "").toLowerCase())) {
                         const res = await window.DB.approveSubscriptionAtomic(id, finalQty, auth.id, auth.role);
@@ -5859,6 +5880,9 @@
                         }).eq('id', trade.user_id);
                         if (uErr) throw new Error("Failed to deduct user balance: " + uErr.message);
 
+                        const taxVal = amount * 0.0012;
+                        const txnVal = amount * 0.0003;
+
                         // Update Trade Record (Only for non-atomic path)
                         const { error: upTradeErr } = await client.from('trades').update({
                             status: 'Settled',
@@ -5866,6 +5890,8 @@
                             quantity: finalQty,
                             final_total_amount: amount,
                             total_amount: amount,
+                            tax_amount: parseFloat(taxVal.toFixed(2)),
+                            txn_charge: parseFloat(txnVal.toFixed(2)),
                             approved_by: auth.id,
                             approved_role: auth.role,
                             approved_at: new Date().toISOString(),
