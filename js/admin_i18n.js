@@ -183,6 +183,7 @@
             "btn_logout": "推出登录",
             "btn_enable": "启用",
             "btn_disable": "禁用",
+            "btn_mark_fully_repaid": "标记为已还清",
 
             // Modals
             "modal_edit_kyc": "编辑实名信息",
@@ -267,6 +268,8 @@
             "status_sold": "已卖出",
             "status_holding": "持仓中",
             "status_pending": "待审核",
+            "status_repaid": "已还清",
+            "status_rejected": "已驳回",
             "status_enabled": "已启用",
             "status_disabled": "已禁用",
             "trans_deposit": "充值 (加钱)",
@@ -467,7 +470,9 @@
             "status_unlocked": "已解锁",
             "err_invalid_qty": "请输入有效的批准数量。",
             "msg_confirm_reject_trade": "您确定要驳回这笔交易吗？",
-            "lbl_confirm_reject": "确认驳回"
+            "lbl_confirm_reject": "确认驳回",
+            "title_confirm_repayment": "确认贷款还款",
+            "msg_confirm_repayment": "您确定要将此贷款标记为已还清吗？这将清除剩余余额并更新用户的未还金额。"
         },
         en: {
             // Sidebar
@@ -648,6 +653,7 @@
             "btn_logout": "Logout",
             "btn_enable": "Enable",
             "btn_disable": "Disable",
+            "btn_mark_fully_repaid": "Mark as Fully Repaid",
 
             // Modals
             "modal_edit_kyc": "Edit KYC Information",
@@ -732,6 +738,8 @@
             "status_sold": "Sold",
             "status_holding": "Holding",
             "status_pending": "Pending",
+            "status_repaid": "Fully Repaid",
+            "status_rejected": "Rejected",
             "status_enabled": "ENABLED",
             "status_disabled": "DISABLED",
             "trans_deposit": "Deposit (Add)",
@@ -933,7 +941,9 @@
             "status_unlocked": "Unlocked",
             "err_invalid_qty": "Please enter a valid approved quantity.",
             "msg_confirm_reject_trade": "Are you sure you want to REJECT this trade?",
-            "lbl_confirm_reject": "Confirm Reject"
+            "lbl_confirm_reject": "Confirm Reject",
+            "title_confirm_repayment": "Confirm Loan Repayment",
+            "msg_confirm_repayment": "Are you sure you want to mark this loan as fully repaid? This will clear the remaining balance and update the user's outstanding amount."
         }
     };
 
