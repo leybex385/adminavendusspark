@@ -108,6 +108,11 @@ body {
     color: var(--negative-red);
 }
 
+.negative-balance {
+    color: #ff4d4f !important;
+    font-weight: 600;
+}
+
 .ticker-divider {
     width: 1px;
     height: 20px;

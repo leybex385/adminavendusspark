@@ -2316,14 +2316,104 @@
             <div id="pageProducts" class="vsl-page" style="display:none;">
                 <div class="vsl-header" style="margin-bottom: 20px;">
                     <h2 class="vsl-title" data-i18n="product_management">Product Management</h2>
-                    <button class="vsl-btn-primary" onclick="openAddProductModal()" data-i18n="add_product">+ Add
-                        Product</button>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button id="btnUpdatePrices"
+                            class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2"
+                            style="border: none; cursor: pointer; font-weight: 500; display:flex; align-items:center;"
+                            onclick="handlePriceUpdate()" data-i18n="btn_update_prices">
+                            🔄 Update Market Prices
+                        </button>
+                        <button class="vsl-btn-primary" onclick="openAddProductModal()" data-i18n="add_product">+
+                            Add
+                            Product</button>
+                    </div>
+                </div>
+
+                <!-- Price Sync Confirm Modal -->
+                <div id="priceSyncConfirmModal" class="kyc-modal-overlay" style="display:none; z-index:9999;">
+                    <div class="kyc-modal-card" style="height:auto; max-width: 400px; text-align: center;">
+                        <div class="kyc-modal-header"
+                            style="justify-content: space-between; border-bottom: none; padding-bottom: 0;">
+                            <span style="font-weight: 600;" data-i18n="modal_confirm_price_sync_title">Confirm Price
+                                Sync</span>
+                            <i data-lucide="x" style="cursor:pointer; color:#64748b;"
+                                onclick="document.getElementById('priceSyncConfirmModal').style.display='none'"></i>
+                        </div>
+                        <div class="kyc-modal-body"
+                            style="padding: 20px; display: flex; flex-direction: column; align-items: center;">
+                            <div style="margin-bottom: 15px; display: flex; justify-content: center;">
+                                <div
+                                    style="background: #eff6ff; border-radius: 50%; padding: 12px; display: inline-flex; align-items: center; justify-content: center;">
+                                    <div
+                                        style="background: #3b82f6; border-radius: 50%; padding: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor"
+                                            stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style="font-size: 15px; color: #334155; margin-bottom: 25px;"
+                                data-i18n="modal_confirm_price_sync_desc">
+                                This will fetch live prices for all active products from Yahoo Finance. Continue?
+                            </p>
+                            <div style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+                                <button class="vsl-btn cancel"
+                                    style="background: #f1f5f9; color: #64748b; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; flex: 1;"
+                                    onclick="document.getElementById('priceSyncConfirmModal').style.display='none'"
+                                    data-i18n="btn_cancel">
+                                    Cancel
+                                </button>
+                                <button class="vsl-btn submit"
+                                    style="background: #10b981; border: none; padding: 10px 20px; border-radius: 6px; color: white; cursor: pointer; flex: 1;"
+                                    onclick="executePriceUpdate()" data-i18n="btn_modal_ok">
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Sync Modal -->
+                <div id="priceSyncModal" class="kyc-modal-overlay" style="display:none; z-index:9999;">
+                    <div class="kyc-modal-card" style="height:auto; max-width: 400px; text-align: center;">
+                        <div class="kyc-modal-header"
+                            style="justify-content: space-between; border-bottom: none; padding-bottom: 0;">
+                            <span style="font-weight: 600;" id="priceSyncTitle"
+                                data-i18n="lbl_notification">Notification</span>
+                            <i data-lucide="x" style="cursor:pointer; color:#64748b;"
+                                onclick="document.getElementById('priceSyncModal').style.display='none'"></i>
+                        </div>
+                        <div class="kyc-modal-body"
+                            style="padding: 20px; display: flex; flex-direction: column; align-items: center;">
+                            <div id="priceSyncIcon"
+                                style="margin-bottom: 15px; display: flex; justify-content: center;">
+                                <!-- Icon injected by JS -->
+                            </div>
+                            <p id="priceSyncDesc" style="font-size: 15px; color: #334155; margin-bottom: 15px;"
+                                data-i18n="lbl_syncing_prices">
+                                Syncing prices...
+                            </p>
+                            <div id="priceSyncDetails"
+                                style="display:none; text-align: left; background: #fef2f2; color: #dc2626; padding: 10px; border-radius: 6px; font-size: 12px; max-height: 100px; overflow-y: auto; width: 100%; margin-bottom: 15px;">
+                            </div>
+                            <button id="priceSyncBtnClose" class="vsl-btn submit"
+                                style="background: #10b981; border: none; padding: 8px 30px; display:none; border-radius: 6px; color: white; cursor: pointer;"
+                                onclick="document.getElementById('priceSyncModal').style.display='none'"
+                                data-i18n="btn_modal_ok">
+                                OK
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <button class="vsl-btn active" id="btn_product_ipo" onclick="setProductFilter('IPO')">[ IPO
                         ]</button>
                     <button class="vsl-btn" id="btn_product_otc" onclick="setProductFilter('OTC')">[ OTC ]</button>
+                    <button class="vsl-btn" id="btn_product_ins" onclick="setProductFilter('Ins.stocks')">[ Ins.stocks
+                        ]</button>
                 </div>
 
                 <div class="pm-card">
@@ -2332,8 +2422,8 @@
                             <thead>
                                 <tr>
                                     <th data-i18n="product_name">Product Name</th>
+                                    <th data-i18n="th_symbol">Symbol</th>
                                     <th data-i18n="th_shares">Shares (Total/Avail)</th>
-                                    <th data-i18n="estimated_profit">Estimated Profit</th>
                                     <th data-i18n="listing_date">Listing Date</th>
                                     <th data-i18n="status">Status</th>
                                     <th data-i18n="actions">Actions</th>
@@ -4668,7 +4758,7 @@
                         <td>${adm.username}</td>
                         <td style="min-width:140px;">
                             <div style="display:flex; align-items:center; gap:8px;">
-                                <span id="${passFieldId}" data-password-plain="${adm.password_plain || '******'}" style="font-family:monospace; color:#64748b;">******</span>
+                                <span id="${passFieldId}" data-password-plain="${adm.password_plain || ''}" style="font-family:monospace; color:#64748b;">******</span>
                                 <button class="vsl-btn-icon" onclick="togglePassword('${adm.id}')" style="background:none; border:none; cursor:pointer; color:#d4af37; padding:0;">
                                     <i data-lucide="eye" style="width:16px;"></i>
                                 </button>
@@ -5616,15 +5706,23 @@
                         if (uErr) throw uErr;
 
                         const currentBalance = parseFloat(user.balance) || 0;
+                        const currentOutstanding = parseFloat(user.outstanding) || 0;
                         let newBalance = currentBalance;
+                        let newOutstanding = currentOutstanding;
 
                         if (type === 'deposit') {
                             newBalance = currentBalance + amount;
+                            newOutstanding = Math.max(0, currentOutstanding - amount);
                         } else if (type === 'set') {
                             newBalance = amount;
+                            newOutstanding = (amount < 0) ? Math.abs(amount) : 0;
                         }
 
-                        const updates = { balance: newBalance };
+                        const updates = {
+                            balance: newBalance,
+                            outstanding: newOutstanding,
+                            negative_balance: newBalance < 0
+                        };
 
                         const { error: upErr } = await client.from('users').update(updates).eq('id', actualUid);
                         if (upErr) throw upErr;
@@ -5763,7 +5861,7 @@
                 // Fetch trade with User info
                 const { data: trade, error: tErr } = await client
                     .from('trades')
-                    .select('*, users!inner(id, csr_id, invitation_code, balance, invested, full_name, mobile)')
+                    .select('*, users!inner(id, csr_id, invitation_code, balance, invested, frozen, full_name, mobile)')
                     .eq('id', id)
                     .single();
 
@@ -5807,17 +5905,23 @@
                         const issuePrice = parseFloat(product?.allocation_price || product?.price || trade.price) || 0;
                         const finalAllocation = finalQty * issuePrice;
                         const userBalance = parseFloat(trade.users.balance) || 0;
-
-                        if (userBalance < finalAllocation) throw new Error(`Insufficient user balance! Required: ₹${finalAllocation.toLocaleString()}, Available: ₹${userBalance.toLocaleString()}`);
+                        const newBalance = userBalance - finalAllocation;
 
                         const lockupDays = product ? parseInt(product.lockup_period || 0) : 0;
                         const lockupUntil = lockupDays > 0 ? new Date(Date.now() + lockupDays * 24 * 60 * 60 * 1000).toISOString() : null;
 
                         const updates = {
-                            balance: userBalance - finalAllocation
+                            balance: newBalance
                         };
 
-                        // Point 5: Move to frozen OR invested (based on lockup logic)
+                        // If balance is negative, track it as outstanding
+                        if (newBalance < 0) {
+                            const debtIncrease = finalAllocation - Math.max(0, userBalance);
+                            updates.outstanding = (parseFloat(trade.users.outstanding) || 0) + debtIncrease;
+                            updates.negative_balance = true;
+                        } else {
+                            updates.negative_balance = false;
+                        }
                         if (lockupUntil) {
                             updates.frozen = (parseFloat(trade.users.frozen) || 0) + finalAllocation;
                         } else {
@@ -5827,40 +5931,20 @@
                         const { error: uErr } = await client.from('users').update(updates).eq('id', trade.user_id);
                         if (uErr) throw uErr;
 
-                        // IPO Fees Calculation
-                        const buyTax = finalAllocation * 0.0012;
-                        const buyTxnFee = finalAllocation * 0.0003;
-                        const totalBuyFees = buyTax + buyTxnFee;
-
-                        console.log("APPROVAL DEBUG", {
-                            tradeId: id,
-                            approvedQty: finalQty,
-                            finalAllocation
-                        });
-
-                        const updatePayload = {
+                        const { error: upTradeErr } = await client.from('trades').update({
                             status: 'Holding',
                             approved_quantity: finalQty, // Point 5: Save approved_quantity
                             quantity: finalQty,
                             price: issuePrice,
                             total_amount: finalAllocation,
-                            final_total_amount: finalAllocation,
-                            buy_tax: parseFloat(buyTax.toFixed(2)),
-                            buy_txn_fee: parseFloat(buyTxnFee.toFixed(2)),
-                            total_buy_fees: parseFloat(totalBuyFees.toFixed(2)),
-                            tax_amount: parseFloat(buyTax.toFixed(2)), // Fallback mapping
-                            txn_charge: parseFloat(buyTxnFee.toFixed(2)), // Fallback mapping
                             lockup_until: lockupUntil,
                             processed_at: new Date().toISOString(),
                             approved_by: auth.id,
                             approved_role: auth.role,
-                            approved_at: new Date().toISOString()
-                        };
-
-                        const response = await client.from('trades').update(updatePayload).eq('id', id);
-                        console.log("UPDATE RESPONSE", response);
-
-                        if (response.error) throw response.error;
+                            approved_at: new Date().toISOString(),
+                            allotment_date: new Date().toISOString()
+                        }).eq('id', id);
+                        if (upTradeErr) throw upTradeErr;
 
                     } else if (['otc', 'ipo'].includes((trade.type || "").toLowerCase())) {
                         const res = await window.DB.approveSubscriptionAtomic(id, finalQty, auth.id, auth.role);
@@ -5868,6 +5952,15 @@
                             const errStr = res.error?.message || res.error || "Unknown Error";
                             throw new Error("Failed to transition funds from frozen to invested: " + errStr);
                         }
+
+                        // Force override status to 'Holding' and 'FILLED' to counter any legacy RPC doing 'Sold'
+                        const { error: ovrErr } = await client.from('trades').update({
+                            status: 'Holding',
+                            order_status: 'FILLED',
+                            allotment_date: new Date().toISOString()
+                        }).eq('id', id);
+                        if (ovrErr) console.warn("Failed to override status to Holding:", ovrErr);
+
                     } else {
                         // Original fallback for secondary market trades (Normal Buy)
                         const userBalance = parseFloat(trade.users.balance) || 0;
@@ -5880,9 +5973,6 @@
                         }).eq('id', trade.user_id);
                         if (uErr) throw new Error("Failed to deduct user balance: " + uErr.message);
 
-                        const taxVal = amount * 0.0012;
-                        const txnVal = amount * 0.0003;
-
                         // Update Trade Record (Only for non-atomic path)
                         const { error: upTradeErr } = await client.from('trades').update({
                             status: 'Settled',
@@ -5890,8 +5980,6 @@
                             quantity: finalQty,
                             final_total_amount: amount,
                             total_amount: amount,
-                            tax_amount: parseFloat(taxVal.toFixed(2)),
-                            txn_charge: parseFloat(txnVal.toFixed(2)),
                             approved_by: auth.id,
                             approved_role: auth.role,
                             approved_at: new Date().toISOString(),
@@ -5961,6 +6049,112 @@
         // --- Product Management Logic ---
         let products = JSON.parse(localStorage.getItem('vsl_products') || '[]');
 
+        let _editingProductId = null;
+
+        function showSyncModal(state, title, desc, details = '') {
+            const modal = document.getElementById('priceSyncModal');
+            const iconDiv = document.getElementById('priceSyncIcon');
+            const titleEl = document.getElementById('priceSyncTitle');
+            const descEl = document.getElementById('priceSyncDesc');
+            const detailsDiv = document.getElementById('priceSyncDetails');
+            const closeBtn = document.getElementById('priceSyncBtnClose');
+
+            titleEl.innerText = title;
+            descEl.innerHTML = desc;
+
+            if (state === 'loading') {
+                iconDiv.innerHTML = `
+                <svg class="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>`;
+                detailsDiv.style.display = 'none';
+                closeBtn.style.display = 'none';
+            } else if (state === 'success') {
+                iconDiv.innerHTML = `
+                <div style="background: #dcfce7; border-radius: 50%; padding: 12px; display: inline-flex; align-items: center; justify-content: center;">
+                    <div style="background: #16a34a; border-radius: 50%; padding: 6px; display: flex; align-items: center; justify-content: center;">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>`;
+                detailsDiv.style.display = 'none';
+                closeBtn.style.display = 'none';
+
+                // Auto close success
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 3000);
+            } else if (state === 'error') {
+                iconDiv.innerHTML = `
+                <div style="background: #ef4444; border-radius: 50%; padding: 10px;">
+                    <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>`;
+
+                if (details) {
+                    detailsDiv.innerHTML = details;
+                    detailsDiv.style.display = 'block';
+                } else {
+                    detailsDiv.style.display = 'none';
+                }
+                closeBtn.style.display = 'inline-block';
+            }
+
+            modal.style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function handlePriceUpdate() {
+            document.getElementById('priceSyncConfirmModal').style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        async function executePriceUpdate() {
+            document.getElementById('priceSyncConfirmModal').style.display = 'none';
+
+            const btn = document.getElementById('btnUpdatePrices');
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            showSyncModal('loading', window.i18n('lbl_notification', 'Notification'), window.i18n('lbl_syncing_prices', 'Syncing prices...'));
+
+            try {
+                const result = await window.DB.updateAllProductPrices();
+
+                if (result.failed > 0) {
+                    // Log original error for debugging
+                    if (result.errors) console.error("Price Sync Errors:", result.errors);
+
+                    const resMsg = window.i18n('msg_sync_result', 'Updated: {updated} | Failed: {failed}')
+                        .replace('{updated}', result.updated)
+                        .replace('{failed}', result.failed);
+
+                    // Show friendly error message instead of raw Edge Function errors
+                    const friendlyErr = `<div>• ${window.i18n('msg_sync_error_user', 'An error occurred while syncing prices. Please check the stock symbol or try again later.')}</div>`;
+
+                    showSyncModal('error', window.i18n('lbl_notification', 'Notification'), resMsg, friendlyErr);
+                } else {
+                    const successMsg = window.i18n('msg_sync_success_multi', `Successfully synced ${result.updated} products`).replace('{count}', result.updated);
+                    showSyncModal('success', window.i18n('lbl_notification', 'Notification'), successMsg);
+                }
+
+                if (typeof renderProducts === 'function') {
+                    renderProducts();
+                } else if (typeof loadProducts === 'function') {
+                    loadProducts();
+                }
+            } catch (err) {
+                console.error("Price Sync Exception:", err);
+                const friendlyErr = `<div>• ${window.i18n('msg_sync_error_user', 'An error occurred while syncing prices. Please check the stock symbol or try again later.')}</div>`;
+                showSyncModal('error', window.i18n('lbl_notification', 'Notification'), 'Sync Failed', friendlyErr);
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+
         function openAddProductModal() {
             console.log("Opening Add Product Modal...");
             const modal = document.getElementById('addProductModal');
@@ -5969,18 +6163,72 @@
                 return;
             }
 
-            // Reset fields
-            const fields = ['p_name', 'p_profit', 'p_price', 'p_start', 'p_end', 'p_listing', 'p_lockup', 'p_min', 'p_max', 'p_desc', 'p_shares'];
-            fields.forEach(f => {
-                const el = document.getElementById(f);
-                if (el) el.value = (f === 'p_min') ? '100000' : (f === 'p_max' ? '10000000' : (f === 'p_shares' ? '1000000' : ''));
-            });
-
-            const premium = document.getElementById('p_premium');
-            if (premium) premium.checked = false;
+            _editingProductId = null;
+            document.getElementById('p_name').value = '';
+            document.getElementById('p_price').value = '';
+            document.getElementById('p_sub_price').value = '';
+            document.getElementById('p_start').value = '';
+            document.getElementById('p_end').value = '';
+            document.getElementById('p_listing').value = '';
+            document.getElementById('p_lockup').value = '0';
+            document.getElementById('p_min').value = '100000';
+            document.getElementById('p_max').value = '10000000';
+            document.getElementById('p_shares').value = '1000000';
+            if (document.getElementById('p_market_symbol')) {
+                document.getElementById('p_market_symbol').value = '';
+            }
+            if (document.getElementById('p_premium')) {
+                document.getElementById('p_premium').checked = false;
+            }
+            if (document.getElementById('p_desc')) {
+                document.getElementById('p_desc').value = '';
+            }
+            if (document.getElementById('p_profit')) {
+                document.getElementById('p_profit').value = '';
+            }
+            if (document.getElementById('p_exchange')) {
+                document.getElementById('p_exchange').value = 'NSE';
+            }
 
             modal.style.display = 'flex';
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        async function editProduct(id) {
+            showLoader(true);
+            const products = await window.DB.getProducts();
+            const p = products.find(x => x.id == id);
+            showLoader(false);
+            if (!p) return;
+
+            _editingProductId = p.id;
+            document.getElementById('p_name').value = p.name || '';
+            document.getElementById('p_price').value = p.price || '';
+            document.getElementById('p_sub_price').value = p.subscription_price || '';
+            document.getElementById('p_start').value = p.start_date ? p.start_date.substring(0, 16) : '';
+            document.getElementById('p_end').value = p.end_date ? p.end_date.substring(0, 16) : '';
+            document.getElementById('p_listing').value = p.listing_date || '';
+            document.getElementById('p_lockup').value = p.lockup_days || '0';
+            document.getElementById('p_min').value = p.min_invest || '';
+            document.getElementById('p_shares').value = p.total_shares || '';
+            document.getElementById('p_max').value = p.max_invest || '';
+            document.getElementById('p_premium').checked = !!p.is_premium;
+            document.getElementById('p_desc').value = p.description || '';
+            if (document.getElementById('p_profit')) {
+                document.getElementById('p_profit').value = p.est_profit_percent || p.profit || '';
+            }
+            if (document.getElementById('p_market_symbol')) {
+                document.getElementById('p_market_symbol').value = p.market_symbol || '';
+            }
+
+            if (document.getElementById('p_product_type')) {
+                document.getElementById('p_product_type').value = p.product_type || 'IPO';
+            }
+            if (document.getElementById('p_exchange')) {
+                document.getElementById('p_exchange').value = p.exchange || 'NSE';
+            }
+
+            document.getElementById('addProductModal').style.display = 'flex';
         }
 
         function closeProductModal() {
@@ -5989,10 +6237,14 @@
 
         async function saveProduct() {
             const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
+            let rawSymbol = document.getElementById('p_market_symbol').value || '';
+            let processedSymbol = rawSymbol.trim().toUpperCase();
+
             const p = {
                 name: document.getElementById('p_name').value,
-                profit: document.getElementById('p_profit').value,
+                market_symbol: processedSymbol,
                 price: parseFloat(document.getElementById('p_price').value) || 0,
+                subscription_price: parseFloat(document.getElementById('p_sub_price').value) || 0,
                 start_date: document.getElementById('p_start').value,
                 end_date: document.getElementById('p_end').value,
                 listing_date: document.getElementById('p_listing').value,
@@ -6003,24 +6255,51 @@
                 available_shares: parseFloat(document.getElementById('p_shares').value) || 1000000,
                 is_premium: document.getElementById('p_premium').checked,
                 description: document.getElementById('p_desc').value,
+                est_profit_percent: parseFloat(document.getElementById('p_profit').value) || 0,
                 product_type: document.getElementById('p_product_type') ? document.getElementById('p_product_type').value : 'IPO',
+                exchange: document.getElementById('p_exchange') ? document.getElementById('p_exchange').value : 'NSE',
                 status: 'Active',
-                created_by: auth.id // Store creator (Instruction 3)
+                created_by: auth.id
             };
 
+            if (_editingProductId) p.id = _editingProductId;
+
             if (!p.name) { showAlert('warning', "Product Name is required!"); return; }
-            if (p.product_type !== 'IPO' && p.product_type !== 'OTC') { showAlert('warning', "Invalid Product Type! Must be IPO or OTC."); return; }
+            if (!p.market_symbol || p.market_symbol.length < 3) {
+                showAlert('warning', "Invalid Market Symbol! Must be at least 3 characters.");
+                return;
+            }
+            if (p.subscription_price <= 0) { showAlert('warning', "Subscription Price is required!"); return; }
+            if (p.product_type !== 'IPO' && p.product_type !== 'OTC' && p.product_type !== 'Ins.stocks') { showAlert('warning', "Invalid Product Type! Must be IPO, OTC, or Ins.stocks."); return; }
 
             showLoader(true);
-            const { success, error } = await window.DB.saveProduct(p);
-            showLoader(false);
+            try {
+                const { success, error } = await window.DB.saveProduct(p);
+                if (!success) throw new Error(error?.message || "Unknown error");
 
-            if (success) {
-                showAlert('success', "Product saved successfully to database!");
+                // --- Sync to market_cache ---
+                try {
+                    let rawSymbolStore = p.market_symbol.trim().toUpperCase();
+
+                    const dbClient = window.DB.getClient();
+                    await dbClient.from('market_cache').upsert({
+                        symbol: rawSymbolStore,
+                        price: p.subscription_price || p.price || 0,
+                        source: 'yahoo',
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'symbol' });
+                } catch (syncErr) {
+                    console.error("Market cache sync failed:", syncErr);
+                }
+                // ----------------------------
+
+                showAlert('success', "Product saved successfully!");
                 closeProductModal();
                 renderProducts();
-            } else {
-                showAlert('error', "Failed to save product: " + (error?.message || "Unknown error"));
+            } catch (err) {
+                showAlert('error', "Error: " + (err.message || "Failed to handle product"));
+            } finally {
+                showLoader(false);
             }
         }
 
@@ -6029,8 +6308,10 @@
             currentProductFilter = type;
             const ipoBtn = document.getElementById('btn_product_ipo');
             const otcBtn = document.getElementById('btn_product_otc');
+            const insBtn = document.getElementById('btn_product_ins');
             if (ipoBtn) ipoBtn.classList.toggle('active', type === 'IPO');
             if (otcBtn) otcBtn.classList.toggle('active', type === 'OTC');
+            if (insBtn) insBtn.classList.toggle('active', type === 'Ins.stocks');
             renderProducts();
         };
 
@@ -6044,8 +6325,11 @@
             // Filter if CSR (Instruction 4 & 7)
             let dbProducts = await window.DB.getProducts(isCsr ? auth.id : null);
 
-            // 4. Filter by IPO vs OTC tab
-            dbProducts = dbProducts.filter(p => (p.product_type || p.type || 'IPO').toUpperCase() === currentProductFilter);
+            // 4. Filter by IPO vs OTC vs Ins.stocks tab
+            dbProducts = dbProducts.filter(p => {
+                const pType = (p.product_type || p.type || 'IPO');
+                return pType.toUpperCase() === currentProductFilter.toUpperCase();
+            });
 
             if (dbProducts.length === 0) {
                 const emptyMsg = isCsr
@@ -6068,16 +6352,19 @@
                 return `
                     <tr>
                         <td>${p.name}</td>
+                        <td>${p.market_symbol || '-'}</td>
                         <td style="font-size:0.75rem;">
                            <div style="font-weight:700;">${(p.available_shares || 0).toLocaleString()}</div>
                            <div style="color:#64748b;">Tot: ${(p.total_shares || 0).toLocaleString()}</div>
                         </td>
-                        <td style="color:#10b981;">${p.profit || 'TBD'}</td>
-                        <td>${p.listing_date || 'TBD'}</td>
+                        <td>${p.listing_date || ''}</td>
                         <td><span class="pm-badge ${badgeClass}" data-i18n="${statusKey}">${displayStatus}</span></td>
                         <td>
-                            ${toggleBtn}
-                            <button class="btn-delete-outline" onclick="deleteProduct(${p.id})" style="font-weight:500;" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
+                            <div style="display:flex; gap:5px;">
+                                ${toggleBtn}
+                                <button class="btn-toggle-active" onclick="editProduct(${p.id})" style="background:#6366f1; color:white; border-color:#6366f1;" data-i18n="lbl_edit">${window.i18n('lbl_edit', 'Edit')}</button>
+                                <button class="btn-delete-outline" onclick="deleteProduct(${p.id})" style="font-weight:500;" data-i18n="lbl_delete">${window.i18n('lbl_delete', 'Delete')}</button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -6708,10 +6995,18 @@
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                 <div class="fm-group" style="grid-column: span 2;">
-                    <label data-i18n="product_type">Product Type</label>
+                    <label data-i18n="lbl_product_type">Product Type</label>
                     <select id="p_product_type" class="vsl-input" required>
                         <option value="IPO" selected>IPO</option>
                         <option value="OTC">OTC</option>
+                        <option value="Ins.stocks">Ins.stocks</option>
+                    </select>
+                </div>
+                <div class="fm-group">
+                    <label data-i18n="lbl_exchange">Exchange</label>
+                    <select id="p_exchange" class="vsl-input" required>
+                        <option value="NSE" selected>NSE</option>
+                        <option value="BSE">BSE</option>
                     </select>
                 </div>
                 <div class="fm-group" style="grid-column: span 2;">
@@ -6719,12 +7014,16 @@
                     <input type="text" id="p_name" class="vsl-input" placeholder="e.g. Colgate-Palmolive India">
                 </div>
                 <div class="fm-group">
-                    <label data-i18n="estimated_profit">Estimated Profit</label>
-                    <input type="text" id="p_profit" class="vsl-input" placeholder="e.g. 31.39%">
+                    <label data-i18n="lbl_market_symbol">Market Symbol</label>
+                    <input type="text" id="p_market_symbol" class="vsl-input" placeholder="e.g. RELIANCE.NS">
                 </div>
                 <div class="fm-group">
-                    <label data-i18n="lbl_allocation_price">Allocation Price</label>
+                    <label data-i18n="lbl_allocation_price">Buy-in Price</label>
                     <input type="text" id="p_price" class="vsl-input" placeholder="e.g. 1648.88">
+                </div>
+                <div class="fm-group">
+                    <label data-i18n="lbl_subscription_price">Subscription Price</label>
+                    <input type="text" id="p_sub_price" class="vsl-input" placeholder="e.g. 1648.88" required>
                 </div>
                 <div class="fm-group">
                     <label data-i18n="lbl_start_sub">Start Subscription</label>
@@ -6761,6 +7060,10 @@
                 <div class="fm-group" style="grid-column: span 2;">
                     <label data-i18n="lbl_product_details">Product Details</label>
                     <textarea id="p_desc" class="vsl-input" style="height:100px; resize:none;"></textarea>
+                </div>
+                <div class="fm-group" style="grid-column: span 2;">
+                    <label data-i18n="lbl_estimated_profit_pct">Estimated Profit (%)</label>
+                    <input type="number" id="p_profit" class="vsl-input" placeholder="e.g. 25">
                 </div>
             </div>
             <div style="margin-top:2rem; display:flex; justify-content:flex-end; gap:1rem;">

@@ -1,3 +1,4 @@
+console.log("⚠️ ROOT db.js EXECUTION START - Potential Conflict?");
 /**
  * User Database Utility (Supabase Backend)
  */
@@ -34,6 +35,23 @@ window.DB = {
         if (!client) return { error: 'No client' };
         const { error } = await client.from(table).update(data).match(match);
         return { success: !error, error };
+    },
+
+    async getMarketPrice(symbol) {
+        const client = this.getClient();
+        if (!client) return { status: 'error', message: 'No client' };
+
+        try {
+            const { data, error } = await client.functions.invoke('get-market-price', {
+                body: { symbol }
+            });
+
+            if (error) throw error;
+            return data;
+        } catch (e) {
+            console.error("Error fetching market price:", e);
+            return { status: 'error', message: e.message };
+        }
     },
 
     // --- AUTHENTICATION ---
@@ -1024,19 +1042,28 @@ window.DB = {
         const client = this.getClient();
         const { data, error } = await client
             .from('trades')
-            .select('*')
+            .select('*, products(*)')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
 
-        return data || [];
+        if (error) {
+            console.error('getTradesByUserId error:', error);
+            return [];
+        }
+
+        return (data || []).map(trade => ({
+            ...trade,
+            est_profit_percent: trade.products ? (trade.products.est_profit_percent || trade.products.profit) : null,
+            exchange: trade.products ? trade.products.exchange : null
+        }));
     },
 
     async getAllTrades() {
         const client = this.getClient();
         const auth = JSON.parse(sessionStorage.getItem('admin_auth') || '{}');
-        let query = client.from('trades').select('*');
+        let query = client.from('trades').select('*, products(*)');
         if (auth.role === 'csr') {
-            query = client.from('trades').select('*, users!inner(*)');
+            query = client.from('trades').select('*, users!inner(*), products(*)');
             if (auth.invitation_code) {
                 query = query.or(`users.csr_id.eq.${auth.id},users.invitation_code.eq.${auth.invitation_code}`);
             } else {
@@ -1044,7 +1071,16 @@ window.DB = {
             }
         }
         const { data, error } = await query.order('created_at', { ascending: false });
-        return data || [];
+        if (error) {
+            console.error('getAllTrades error:', error);
+            return [];
+        }
+
+        return (data || []).map(trade => ({
+            ...trade,
+            est_profit_percent: trade.products ? (trade.products.est_profit_percent || trade.products.profit) : null,
+            exchange: trade.products ? trade.products.exchange : null
+        }));
     },
 
     async updateTradeStatus(id, status, adminNote = '') {
@@ -1230,12 +1266,14 @@ window.DB = {
         if (!client) return [];
 
         let query = client.from('products').select('*').eq('status', 'Active');
-        
+
         if (type === 'IPO') {
             // For IPO, match explicit 'IPO' or catch legacy nulls/empties
             query = query.or('product_type.eq.IPO,product_type.is.null');
         } else if (type === 'OTC') {
             query = query.eq('product_type', 'OTC');
+        } else if (type === 'Ins.stocks') {
+            query = query.eq('product_type', 'Ins.stocks');
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });
@@ -1251,19 +1289,31 @@ window.DB = {
         const client = this.getClient();
         if (!client) return { success: false, message: 'Database not connected' };
 
-        let result;
-        if (productData.id && !productData.id.toString().startsWith('local_')) {
-            // Update existing
-            result = await client
-                .from('products')
-                .update(productData)
-                .eq('id', productData.id);
-        } else {
-            // Insert new (remove local ID if any)
-            const { id, ...saveData } = productData;
-            result = await client
-                .from('products')
-                .insert([saveData]);
+        const performSave = async (data) => {
+            if (data.id && !data.id.toString().startsWith('local_')) {
+                return await client
+                    .from('products')
+                    .update(data)
+                    .eq('id', data.id);
+            } else {
+                const { id, ...saveData } = data;
+                return await client
+                    .from('products')
+                    .insert([saveData]);
+            }
+        };
+
+        let result = await performSave(productData);
+
+        // Fallback for missing est_profit_percent column
+        if (result.error && (result.error.message.includes('est_profit_percent') || result.error.code === 'PGRST204')) {
+            console.log('Detected missing est_profit_percent, falling back to profit column...');
+            const fallbackData = { ...productData };
+            if (fallbackData.est_profit_percent !== undefined) {
+                fallbackData.profit = fallbackData.est_profit_percent;
+                delete fallbackData.est_profit_percent;
+            }
+            result = await performSave(fallbackData);
         }
 
         return { success: !result.error, error: result.error };
@@ -1282,6 +1332,93 @@ window.DB = {
         if (!client) return { success: false };
         const { error } = await client.from('products').update({ status: newStatus }).eq('id', id);
         return { success: !error, error };
+    },
+
+    async updateAllProductPrices() {
+        const client = this.getClient();
+        const summary = { success: true, updated: 0, failed: 0, errors: [] };
+
+        if (!client) {
+            summary.success = false;
+            summary.errors.push("Database not connected");
+            return summary;
+        }
+
+        try {
+            // 1. Fetch all 'Active' products
+            const { data: products, error: fetchErr } = await client
+                .from('products')
+                .select('*')
+                .eq('status', 'Active');
+
+            if (fetchErr) throw fetchErr;
+            if (!products || products.length === 0) {
+                console.log("No active products found to update.");
+                return summary;
+            }
+
+            console.log(`Found ${products.length} active products to fetch prices for.`);
+
+            // 2. Loop through products
+            for (const product of products) {
+                try {
+                    const rawSymbol = product.market_symbol || product.symbol || "";
+                    if (!rawSymbol) throw new Error(`Product missing symbol metadata`);
+
+                    let fullSymbol = rawSymbol;
+                    const market = (product.market || "").toLowerCase();
+
+                    // Add market suffix if needed
+                    if (market === 'india' || market === 'nse') {
+                        if (!fullSymbol.endsWith('.NS')) fullSymbol += '.NS';
+                    } else if (market === 'korea' || market === 'kospi') {
+                        if (!fullSymbol.endsWith('.KS')) fullSymbol += '.KS';
+                    }
+
+                    console.log(`[Batch Update] Fetching price for: ${product.name} | Symbol: ${fullSymbol}`);
+
+                    // 3. Call the Edge Function
+                    const res = await this.getMarketPrice(fullSymbol);
+
+                    if (res && res.status === 'error') {
+                        throw new Error(res.message || "Failed to fetch price");
+                    }
+
+                    // 4. Extract price
+                    const price = res.price || res.regularMarketPrice || res.currentPrice || res.result?.regularMarketPrice;
+
+                    if (price === undefined || price === null) {
+                        throw new Error(`Price field missing, response: ${JSON.stringify(res)}`);
+                    }
+
+                    // 5. Update market_cache
+                    const { error: upsertErr } = await client
+                        .from('market_cache')
+                        .upsert({
+                            symbol: rawSymbol,
+                            price: price,
+                            source: 'yahoo',
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'symbol' });
+
+                    if (upsertErr) throw upsertErr;
+                    summary.updated++;
+
+                } catch (pErr) {
+                    console.error(`Failed to update ${product.name} (${product.symbol}):`, pErr);
+                    summary.failed++;
+                    summary.errors.push(`[${product.symbol || 'Unknown'}] ${pErr.message}`);
+                }
+
+                // 6. Rate-limiting delay (1.5 seconds)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        } catch (err) {
+            summary.success = false;
+            summary.errors.push(err.message);
+        }
+
+        return summary;
     },
 
     // --- PLATFORM SETTINGS ---
@@ -1557,3 +1694,4 @@ window.DB = {
 
 console.log("SUPABASE DEBUG URL:", SUPABASE_URL);
 console.log("SUPABASE DEBUG KEY PREFIX:", SUPABASE_ANON_KEY?.substring(0, 20));
+

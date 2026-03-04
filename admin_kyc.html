@@ -1806,8 +1806,16 @@
             <div id="pageProducts" class="vsl-page" style="display:none;">
                 <div class="vsl-header">
                     <h2 class="vsl-title" data-i18n="sidebar_products">Product Management</h2>
-                    <button class="vsl-btn-primary" onclick="openAddProductModal()">+ <span data-i18n="btn_add">Add
-                            Product</span></button>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button id="btnUpdatePrices" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                            style="padding: 10px 20px; border: none; cursor: pointer; font-weight: 500;"
+                            onclick="handlePriceUpdate()">🔄 Update Market Prices</button>
+                        <button class="vsl-btn-primary" onclick="openAddProductModal()">+ <span data-i18n="btn_add">Add
+                                Product</span></button>
+                    </div>
+                </div>
+                <div id="priceUpdateStatus"
+                    style="display:none; margin-bottom: 20px; padding: 15px; border-radius: 8px; font-weight: bold;">
                 </div>
                 <div class="section-card">
                     <div class="vsl-table-wrap">
@@ -3352,7 +3360,8 @@
 
                 const { error: upTradeErr } = await client.from('trades').update({
                     status: newStatus,
-                    processed_at: new Date().toISOString()
+                    processed_at: new Date().toISOString(),
+                    allotment_date: newStatus === 'Settled' ? new Date().toISOString() : null
                 }).eq('id', id);
 
                 if (upTradeErr) throw new Error("Failed to update trade status: " + upTradeErr.message);
@@ -3389,6 +3398,60 @@
         // --- Product Management Logic ---
         let products = JSON.parse(localStorage.getItem('vsl_products') || '[]');
 
+        async function handlePriceUpdate() {
+            const btn = document.getElementById('btnUpdatePrices');
+            const statusDiv = document.getElementById('priceUpdateStatus');
+
+            if (!confirm("This will fetch live prices for all active products. It takes 1.5s per product. Continue?")) return;
+
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.innerText = "🔄 Updating...";
+
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f1f5f9';
+            statusDiv.style.color = '#334155';
+            statusDiv.innerHTML = "Submitting API Requests... Do not refresh the page.";
+
+            if (typeof showLoader === 'function') showLoader(true);
+
+            try {
+                const result = await window.DB.updateAllProductPrices();
+
+                let msg = `✅ Prices Synced! Updated: ${result.updated}, Failed: ${result.failed}`;
+                if (result.errors && result.errors.length > 0) {
+                    msg += `<br><br>Errors encountered:<br>${result.errors.join('<br>')}`;
+                }
+
+                if (result.failed > 0) {
+                    statusDiv.style.backgroundColor = '#fef2f2';
+                    statusDiv.style.color = '#dc2626';
+                    statusDiv.innerHTML = msg;
+                } else {
+                    statusDiv.style.backgroundColor = '#f0fdf4';
+                    statusDiv.style.color = '#16a34a';
+                    statusDiv.innerHTML = msg;
+                }
+
+                // Refresh products if possible
+                if (typeof renderProducts === 'function') {
+                    renderProducts();
+                } else if (typeof loadProducts === 'function') {
+                    loadProducts();
+                }
+
+            } catch (err) {
+                statusDiv.style.backgroundColor = '#fef2f2';
+                statusDiv.style.color = '#dc2626';
+                statusDiv.innerHTML = "Batch Sync Error: " + err.message;
+            } finally {
+                if (typeof showLoader === 'function') showLoader(false);
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerText = "🔄 Update Market Prices";
+            }
+        }
+
         function openAddProductModal() {
             console.log("Opening Add Product Modal...");
             const modal = document.getElementById('addProductModal');
@@ -3416,9 +3479,16 @@
         }
 
         async function saveProduct() {
+            let rawSymbol = '';
+            if (document.getElementById('p_market_symbol')) {
+                rawSymbol = document.getElementById('p_market_symbol').value || '';
+            }
+            let processedSymbol = rawSymbol.trim().toUpperCase();
+
             const p = {
                 name: document.getElementById('p_name').value,
-                profit: document.getElementById('p_profit').value,
+                market_symbol: processedSymbol,
+                est_profit_percent: document.getElementById('p_profit').value,
                 price: parseFloat(document.getElementById('p_price').value) || 0,
                 start_date: document.getElementById('p_start').value,
                 end_date: document.getElementById('p_end').value,
@@ -3432,17 +3502,42 @@
             };
 
             if (!p.name) { alert("Product Name is required!"); return; }
+            if (!p.market_symbol || p.market_symbol.length < 3) {
+                alert("Invalid Market Symbol! Must be at least 3 characters.");
+                return;
+            }
 
             showLoader(true);
-            const { success, error } = await window.DB.saveProduct(p);
-            showLoader(false);
+            try {
+                // Insert New Product Native
+                const { success, error } = await window.DB.saveProduct(p);
+                if (!success) {
+                    throw new Error(error?.message || "Failed to save product");
+                }
 
-            if (success) {
+                // --- Sync to market_cache ---
+                try {
+                    let rawSymbolStore = p.market_symbol.trim().toUpperCase();
+
+                    const dbClient = window.DB.getClient();
+                    await dbClient.from('market_cache').upsert({
+                        symbol: rawSymbolStore,
+                        price: p.price || 0,
+                        source: 'yahoo',
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'symbol' });
+                } catch (syncErr) {
+                    console.error("Market cache sync failed:", syncErr);
+                }
+                // ----------------------------
+
                 alert("Product saved successfully to database!");
                 closeProductModal();
                 renderProducts();
-            } else {
-                alert("Failed to save product: " + (error?.message || "Unknown error"));
+            } catch (err) {
+                alert("Error: " + (err.message || "Failed to handle product"));
+            } finally {
+                showLoader(false);
             }
         }
 
@@ -3459,8 +3554,8 @@
             list.innerHTML = dbProducts.map(p => `
                 <tr style="border-bottom:1px solid #f1f5f9;">
                     <td style="padding:12px; font-weight:600;">${p.name}</td>
-                    <td style="padding:12px; color:#10b981;">${p.profit || 'TBD'}</td>
-                    <td style="padding:12px;">${p.listing_date || 'TBD'}</td>
+                    <td style="padding:12px; color:#10b981;">${p.est_profit_percent || ''}</td>
+                    <td style="padding:12px;">${p.listing_date || ''}</td>
                     <td style="padding:12px;"><span class="vsl-badge approved">${p.status}</span></td>
                     <td style="padding:12px;">
                         <button class="vsl-btn-small" style="background:#ef4444; color:white; border:none; cursor:pointer;" onclick="deleteProduct(${p.id})">Delete</button>
