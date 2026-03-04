@@ -1,3 +1,4 @@
+console.log("🔥 trading.js LOADED");
 /**
  * Trading Logic - Close Order / Sell Trade
  */
@@ -7,6 +8,12 @@ let isExecutingSell = false; // Flag to prevent double execution
 
 // Attach to window for global access
 window.openCloseOrderModal = function (tradeOrId) {
+    const user = window.DB ? window.DB.getCurrentUser() : null;
+    if (user && parseFloat(user.balance) < 0) {
+        alert("Selling is disabled because your account has a negative balance. Please repay the outstanding amount to resume selling.");
+        return;
+    }
+
     let trade;
     if (typeof tradeOrId === 'object') {
         trade = tradeOrId;
@@ -21,6 +28,15 @@ window.openCloseOrderModal = function (tradeOrId) {
         console.error("Trade not found for selling:", tradeOrId);
         alert("Trade details could not be found. Please try again.");
         return;
+    }
+
+    // LISTING DATE GUARD (UI Layer)
+    if (trade.products && trade.products.listing_date) {
+        const listingDate = new Date(trade.products.listing_date);
+        if (listingDate > new Date()) {
+            alert(`You cannot sell this asset before its official listing date (${listingDate.toLocaleDateString('en-IN')}).`);
+            return;
+        }
     }
 
     const tradeId = trade.id;
@@ -158,6 +174,20 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
         // --- TRADING FREEZE GUARD ---
         if (user.trading_frozen) {
             throw new Error("Trading functions are temporarily unavailable. Please check your account status or try again later.");
+        }
+
+        // --- LISTING DATE GUARD ---
+        const { data: product, error: prodErr } = await client
+            .from('products')
+            .select('listing_date')
+            .eq('symbol', trade.symbol)
+            .single();
+
+        if (!prodErr && product && product.listing_date) {
+            const listingDate = new Date(product.listing_date);
+            if (listingDate > new Date()) {
+                throw new Error(`You cannot sell this asset before its official listing date (${listingDate.toLocaleDateString('en-IN')}).`);
+            }
         }
 
         // 2. Re-fetch real-time price
@@ -341,7 +371,7 @@ window.openOTCSubscribeModal = function (productId) {
 
         const color = (product.change >= 0 || product.type !== 'stock') ? '#10b981' : '#ef4444';
 
-        window.openStockDetail(product.symbol, product.name, exchange, priceStr, changeStr, color, product.type, true, product.id, product.minInvest);
+        window.openStockDetail(product.market_symbol || product.symbol, product.name, exchange, priceStr, changeStr, color, product.type, true, product.id, product.minInvest);
     } else {
         console.error("openStockDetail not defined on this page");
     }
@@ -349,3 +379,27 @@ window.openOTCSubscribeModal = function (productId) {
 
 // Alias for backward compatibility
 window.openSellingModal = window.openCloseOrderModal;
+
+/**
+ * loadTrades: Fetches and debugs trade data.
+ * Requested by user for troubleshooting.
+ */
+window.loadTrades = async function () {
+    console.log("🔥 loadTrades EXECUTED");
+    console.log("loadTrades() EXECUTED");
+    console.log("Current User Auth Status:", await window.supabaseClient.auth.getUser());
+    console.log("Fetching trades from DB...");
+
+    const user = window.DB ? window.DB.getCurrentUser() : null;
+    if (!user) {
+        console.warn("No user found in localStorage, cannot fetch trades.");
+        return;
+    }
+
+    if (typeof window.fetchUserTransactions === 'function') {
+        console.log("Calling fetchUserTransactions()...");
+        await window.fetchUserTransactions();
+    } else {
+        console.warn("fetchUserTransactions not defined on this page.");
+    }
+};
