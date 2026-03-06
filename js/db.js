@@ -44,6 +44,23 @@ window.DB = {
         }
     },
 
+    async searchStocks(query) {
+        const client = this.getClient();
+        if (!client) return [];
+
+        try {
+            const { data, error } = await client.functions.invoke('search-stocks', {
+                body: { query }
+            });
+
+            if (error) throw error;
+            return data || [];
+        } catch (e) {
+            console.error("Error searching stocks:", e);
+            return [];
+        }
+    },
+
     // --- AUTHENTICATION ---
     async login(identifier, password) {
         const client = this.getClient();
@@ -1044,8 +1061,145 @@ window.DB = {
         if (auth.role === 'csr') {
             return { success: false, error: { message: "Unauthorized Role Action: CSR accounts are view-only for deposits." } };
         }
-        const { error } = await client.from('deposits').update({ status, processed_at: new Date().toISOString() }).eq('id', id);
-        return { success: !error, error };
+
+        try {
+            // 1. Fetch the existing deposit and its current status
+            const { data: existing, error: getErr } = await client.from('deposits').select('*').eq('id', id).single();
+            if (getErr || !existing) throw new Error("Deposit record not found.");
+
+            const oldStatus = existing.status;
+            const parseNum = (v) => parseFloat((v || "0").toString().replace(/,/g, '')) || 0;
+            const amount = parseNum(existing.amount);
+            const uid = existing.user_id;
+
+            // 2. Handle Balance Transition Logic
+            if (status === 'Approved' && oldStatus !== 'Approved') {
+                const { data: user, error: uErr } = await client.from('users').select('*').eq('id', uid).single();
+                if (uErr) throw uErr;
+
+                const currentBalance = parseNum(user.balance);
+                const currentOutstanding = parseNum(user.outstanding);
+
+                // Automatic Offset Logic:
+                // New balance simply adds the deposit (can be still negative or become positive)
+                const newBalance = currentBalance + amount;
+                // If there was outstanding debt, reduce it by the deposit amount
+                const newOutstanding = Math.max(0, currentOutstanding - amount);
+
+                const updates = {
+                    balance: newBalance,
+                    outstanding: newOutstanding,
+                    negative_balance: newBalance < 0
+                };
+
+                const { error: upErr } = await client.from('users').update(updates).eq('id', uid);
+                if (upErr) throw upErr;
+
+                // --- NEW LOGIC: AUTO-SETTLE LOCKED_UNPAID TRADES ---
+                try {
+                    // Fetch trades chronologically that match the criteria
+                    const { data: lockedTrades, error: lockedErr } = await client.from('trades')
+                        .select('id, outstanding_amount, paid_amount')
+                        .eq('user_id', uid)
+                        .eq('status', 'LOCKED_UNPAID')
+                        .order('created_at', { ascending: true });
+
+                    if (!lockedErr && lockedTrades && lockedTrades.length > 0) {
+                        // The deposit itself acts as the budget to pay off debts
+                        let settlementBudget = amount;
+
+                        for (const trade of lockedTrades) {
+                            const outAmt = parseFloat(trade.outstanding_amount) || 0;
+
+                            if (outAmt <= 0) {
+                                // Already paid off, just unlock it unconditionally
+                                const tradeUpdates = {
+                                    status: 'Holding',
+                                    order_status: 'FILLED'
+                                };
+                                const { error: trUpErr } = await client.from('trades').update(tradeUpdates).eq('id', trade.id);
+                                if (!trUpErr) {
+                                    console.log(`Auto-unlocked fully paid trade ${trade.id} for user ${uid}.`);
+                                } else {
+                                    console.error(`Failed to auto-unlock trade ${trade.id}:`, trUpErr);
+                                }
+                            } else if (settlementBudget > 0) {
+                                // Calculate how much of the debt we can pay with remaining budget
+                                const payAmount = Math.min(outAmt, settlementBudget);
+                                settlementBudget -= payAmount;
+
+                                const newOut = outAmt - payAmount;
+                                const originalPaid = parseFloat(trade.paid_amount) || 0;
+
+                                const tradeUpdates = {
+                                    outstanding_amount: newOut,
+                                    paid_amount: originalPaid + payAmount
+                                };
+
+                                // If the trade is fully paid off, transition the status
+                                if (newOut <= 0) {
+                                    tradeUpdates.status = 'Holding';
+                                    tradeUpdates.order_status = 'FILLED';
+                                }
+
+                                const { error: trUpErr } = await client.from('trades')
+                                    .update(tradeUpdates)
+                                    .eq('id', trade.id);
+
+                                if (!trUpErr) {
+                                    console.log(`Auto-settled trade ${trade.id} for user ${uid}. Paid: ${payAmount}, Remaining: ${newOut}`);
+                                } else {
+                                    console.error(`Failed to auto-settle trade ${trade.id}:`, trUpErr);
+                                }
+                            }
+                        }
+                    }
+                } catch (autoErr) {
+                    console.error("Error during auto-settlement of locked trades:", autoErr);
+                }
+
+                // --- GLOBAL SWEEP: Unconditionally unlock any fully paid locked trades ---
+                try {
+                    await client.from('trades')
+                        .update({ status: 'Holding', order_status: 'FILLED' })
+                        .eq('user_id', uid)
+                        .eq('status', 'LOCKED_UNPAID')
+                        .lte('outstanding_amount', 0);
+                } catch (sweepErr) {
+                    console.error("Global sweep error in updateDepositStatus:", sweepErr);
+                }
+                // --- END AUTO-SETTLE ---
+            }
+            else if (status !== 'Approved' && oldStatus === 'Approved') {
+                // Reverse an approval (Correction)
+                const { data: user, error: uErr } = await client.from('users').select('*').eq('id', uid).single();
+                if (uErr) throw uErr;
+
+                const currentBalance = parseFloat(user.balance) || 0;
+                const newBalance = currentBalance - amount;
+
+                const updates = {
+                    balance: newBalance,
+                    negative_balance: newBalance < 0
+                };
+
+                const { error: upErr } = await client.from('users').update(updates).eq('id', uid);
+                if (upErr) throw upErr;
+            }
+
+            // 3. Update the deposit status
+            const { error: finalErr } = await client.from('deposits').update({
+                status,
+                processed_at: new Date().toISOString()
+            }).eq('id', id);
+
+            if (finalErr) throw finalErr;
+
+            return { success: true };
+        } catch (err) {
+            console.error("updateDepositStatus error:", err);
+            return { success: false, error: err };
+        }
     },
 
     async updateWithdrawalStatus(id, status) {
@@ -1175,6 +1329,77 @@ window.DB = {
 
         if (!error && (!data || data.length === 0)) {
             return { success: false, error: { message: "User not found or update failed (RLS?)" } };
+        }
+
+        // --- PROPORTIONAL DEBT DISTRIBUTION & SWEEP ---
+        try {
+            // Wait for DB to settle new balance
+            const { data: updatedUser } = await client.from('users').select('balance').eq('id', userId).single();
+            const actualBalance = updatedUser ? parseFloat(updatedUser.balance) || 0 : (parseFloat(updates.balance) || 0);
+
+            // Fetch locked trades to distribute capital across them
+            const { data: lockedTrades } = await client.from('trades')
+                .select('id, outstanding_amount, paid_amount')
+                .eq('user_id', userId)
+                .eq('status', 'LOCKED_UNPAID')
+                .order('created_at', { ascending: true });
+
+            if (lockedTrades && lockedTrades.length > 0) {
+                // If they explicitly wiped outstanding to 0, or if they have plenty of cash to cover
+                let availableCapital = 0;
+
+                if (updates.outstanding === 0 || updates.outstanding === '0') {
+                    // Admin specifically ordered to wipe debt
+                    availableCapital = Infinity;
+                } else if (actualBalance >= 0) {
+                    // User is no longer in debt overall, so whatever total trade debt exists is fully covered
+                    availableCapital = Infinity;
+                } else {
+                    // They are still in debt, but we must use whatever paid capital they have
+                    // To compute paid capital: (Total Outstanding Debt of Trades) - ABS(Actual Balance)
+                    const totalTradeDebt = lockedTrades.reduce((sum, t) => sum + (parseFloat(t.outstanding_amount) || 0), 0);
+                    availableCapital = totalTradeDebt - Math.abs(actualBalance);
+                }
+
+                // Distribute
+                if (availableCapital > 0) {
+                    for (const trade of lockedTrades) {
+                        const outAmt = parseFloat(trade.outstanding_amount) || 0;
+                        if (outAmt > 0 && availableCapital > 0) {
+                            const payAmt = Math.min(availableCapital, outAmt);
+                            const newOut = outAmt - payAmt;
+                            const originalPaid = parseFloat(trade.paid_amount) || 0;
+
+                            const tradeUpdates = {
+                                outstanding_amount: newOut,
+                                paid_amount: originalPaid + payAmt
+                            };
+
+                            // Unlock if paid off
+                            if (newOut <= 0.01) {  // Margin of precision float error safety
+                                tradeUpdates.status = 'Holding';
+                                tradeUpdates.order_status = 'FILLED';
+                            }
+
+                            await client.from('trades').update(tradeUpdates).eq('id', trade.id);
+                            availableCapital -= payAmt;
+                        } else if (outAmt <= 0.01) {
+                            // Already paid off
+                            await client.from('trades').update({ status: 'Holding', order_status: 'FILLED' }).eq('id', trade.id);
+                        }
+                    }
+                }
+            }
+
+            // Absolute global sweep backup
+            await client.from('trades')
+                .update({ status: 'Holding', order_status: 'FILLED' })
+                .eq('user_id', userId)
+                .eq('status', 'LOCKED_UNPAID')
+                .lte('outstanding_amount', 0);
+
+        } catch (sweepErr) {
+            console.error("Global sweep error in updateUserFinancials:", sweepErr);
         }
 
         return { success: !error, data, error };
@@ -1664,6 +1889,56 @@ window.DB = {
         if (!client) return { success: false };
         const { error } = await client.from('deposits').delete().eq('id', id);
         return { success: !error, error };
+    },
+
+    // --- ATOMIC SUBSCRIPTION & SETTLEMENT ---
+    async submitSubscriptionAtomic(tradeData) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+        const { data, error } = await client.rpc('submit_subscription_atomic', {
+            p_user_id: tradeData.user_id,
+            p_trade_data: tradeData
+        });
+        if (error) {
+            console.error("RPC submit_subscription_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        if (data && data.success === false) return { success: false, error: data.error };
+        return data;
+    },
+
+    async settleTradeBalance(tradeId, amount) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+        const user = this.getCurrentUser();
+        if (!user) return { success: false, message: 'User not logged in' };
+        const { data, error } = await client.rpc('settle_trade_balance_atomic', {
+            p_user_id: user.id,
+            p_trade_id: parseInt(tradeId),
+            p_amount: parseFloat(amount)
+        });
+        if (error) {
+            console.error("RPC settle_trade_balance_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        return data;
+    },
+
+
+    async rejectSubscriptionAtomic(tradeId, authId, authRole) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+        const { data, error } = await client.rpc('reject_subscription_atomic', {
+            p_trade_id: parseInt(tradeId),
+            p_auth_id: parseInt(authId),
+            p_auth_role: authRole
+        });
+        if (error) {
+            console.error("RPC reject_subscription_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        if (data && data.success === false) return { success: false, error: data.error };
+        return data;
     }
 };
 

@@ -38,6 +38,22 @@ console.log("🔥 market_data.js LOADED");
             this.dbOtcProducts = []; // Cache for database products (OTC)
             this.dbInsStocks = []; // Cache for database products (Ins.stocks)
             this.listeners = [];
+
+            // Yahoo Symbols Mapping for Major Indices
+            this.indexYahooSymbols = {
+                'SENSEX': '^BSESN',
+                'NIFTY 50': '^NSEI',
+                'NSE NIFTY 50': '^NSEI',
+                'NIFTY BANK': '^NSEBANK',
+                'NSE NIFTY BANK': '^NSEBANK',
+                'NIFSMCP100': '^NSESMCP100',
+                'NIFTY SMALLCAP 100': '^NSESMCP100',
+                'NIFMDCP100': '^NSEMDCP100',
+                'NIFTY MIDCAP 100': '^NSEMDCP100',
+                'VIX': '^INDIAVIX',
+                'INDIA VIX': '^INDIAVIX'
+            };
+
             this.startSimulation();
             this.syncFromDB();
         }
@@ -104,7 +120,7 @@ console.log("🔥 market_data.js LOADED");
                             deadline: p.end_date || 'TBD',
                             listingDate: p.listing_date || 'TBD',
                             level: (parseFloat(p.min_invest) > 100000) ? 'Lv ≥ 2' : 'Lv ≥ 1',
-                            type: 'stock', // Map to standard 'stock' type for rendering
+                            type: 'INS.STOCKS', // Standardized product_type
                             totalShares: p.total_shares || 0,
                             availableShares: p.available_shares || 0,
                             exchange: p.exchange,
@@ -154,7 +170,8 @@ console.log("🔥 market_data.js LOADED");
                     stock.price += (stock.price * changePercent);
                 });
 
-                // Fluctuate Indices
+                // Fluctuate Indices (DISABLED - per user request to use real-time only)
+                /*
                 this.indices.forEach(idx => {
                     const volatility = 0.002; // Indices are less volatile
                     const changePercent = (Math.random() * volatility * 2) - volatility;
@@ -163,6 +180,7 @@ console.log("🔥 market_data.js LOADED");
                     idx.change += changeAmount;
                     idx.changePercent += (changePercent * 100);
                 });
+                */
 
                 this.notifyListeners();
             }, 1000);
@@ -196,6 +214,30 @@ console.log("🔥 market_data.js LOADED");
 
         getIndices() { return this.indices; }
 
+        async syncIndicesWithYahoo() {
+            console.log("🔄 MarketEngine: Syncing Indices with Yahoo Finance...");
+            for (let idx of this.indices) {
+                const yahooSymbol = this.indexYahooSymbols[idx.symbol] || this.indexYahooSymbols[idx.name];
+                if (yahooSymbol) {
+                    try {
+                        const data = await window.DB.getMarketPrice(yahooSymbol);
+                        if (data && data.price) {
+                            const oldPrice = idx.price;
+                            idx.price = data.price;
+                            // Update daily change based on previous to avoid static feel
+                            idx.change = idx.price - (oldPrice || idx.price);
+                            if (oldPrice > 0) {
+                                idx.changePercent = (idx.change / oldPrice) * 100;
+                            }
+                            this.notifyListeners();
+                        }
+                    } catch (e) {
+                        console.error(`Failed to sync index ${idx.symbol}:`, e);
+                    }
+                }
+            }
+        }
+
         getAllStocks() {
             return [...this.stocks, ...(this.dbInsStocks || [])];
         }
@@ -204,9 +246,14 @@ console.log("🔥 market_data.js LOADED");
             return [...this.ipo, ...this.dbProducts];
         }
 
-        getProduct(symbol) {
+        getProduct(idOrSymbol) {
             const all = [...this.stocks, ...this.getOTC(), ...this.getIPO(), ...(this.dbInsStocks || []), ...this.indices];
-            return all.find(s => s.symbol === symbol || s.id === symbol);
+            // 1. Try matching by ID (Reliably unique)
+            const byId = all.find(s => s.id === idOrSymbol || String(s.id) === String(idOrSymbol));
+            if (byId) return byId;
+
+            // 2. Fallback to Symbol matching
+            return all.find(s => s.symbol === idOrSymbol);
         }
     }
 

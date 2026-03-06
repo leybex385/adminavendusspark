@@ -359,19 +359,24 @@ window.openOTCSubscribeModal = function (productId) {
     }
 
     if (typeof window.openStockDetail === "function") {
-        const exchange = product.symbol.includes('NSE') ? 'NSE' : 'BSE';
+        const exchange = product.exchange || (product.symbol.includes('.NS') ? 'NSE' : 'BSE');
         const priceStr = '₹' + product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
+        // Normalize type for consistent UI behavior
+        let displayType = (product.type || 'stock').trim().toUpperCase();
+        if (displayType.includes('INS') && displayType.includes('STOCKS')) displayType = 'INS.STOCKS';
+        if (displayType === 'INS_STOCKS') displayType = 'INS.STOCKS';
+
         let changeStr = '';
-        if (product.type === 'IPO' || product.type === 'OTC') {
+        if (displayType === 'IPO' || displayType === 'OTC') {
             changeStr = product.yield || 'Live';
         } else {
             changeStr = (product.change >= 0 ? '+' : '') + (product.change || 0).toFixed(2) + '%';
         }
 
-        const color = (product.change >= 0 || product.type !== 'stock') ? '#10b981' : '#ef4444';
+        const color = (product.change >= 0 || (displayType !== 'INS.STOCKS' && displayType !== 'STOCK')) ? '#10b981' : '#ef4444';
 
-        window.openStockDetail(product.market_symbol || product.symbol, product.name, exchange, priceStr, changeStr, color, product.type, true, product.id, product.minInvest);
+        window.openStockDetail(product.market_symbol || product.symbol, product.name, exchange, priceStr, changeStr, color, displayType, true, product.id, product.minInvest);
     } else {
         console.error("openStockDetail not defined on this page");
     }
