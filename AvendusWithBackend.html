@@ -1768,15 +1768,29 @@
             if (!filtered.length) { list.innerHTML = '<p style="text-align:center; padding:40px; color:#94a3b8;">No internal messages sent yet.</p>'; return; }
 
             list.innerHTML = filtered.map(x => {
-                let p = JSON.parse(x.message);
-                const body = p.message || p.body || p.content || "";
+                let p = { title: "No Subject", message: "" };
+                try {
+                    let parsed = JSON.parse(x.message);
+                    p = { ...p, ...parsed };
+
+                    let innerStr = p.message || p.body || p.content || "";
+                    if (typeof innerStr === "string" && innerStr.trim().startsWith("{")) {
+                        try {
+                            let innerParsed = JSON.parse(innerStr);
+                            p = { ...p, ...innerParsed };
+                        } catch (e) { }
+                    }
+                } catch (e) {
+                    p.message = x.message;
+                }
+                const bodyText = p.message || p.body || p.content || "";
                 return `
                     <div class="msg-row" onclick='viewM(${JSON.stringify(x).replace(/'/g, "&apos;")}, this)'>
                         <div class="msg-row-top">
                             <span class="msg-row-title">${p.title || "No Subject"}</span>
                             <span class="msg-row-date">${new Date(x.created_at).toLocaleString()}</span>
                         </div>
-                        <div class="msg-row-preview">${body}</div>
+                        <div class="msg-row-preview">${bodyText}</div>
                     </div>
                 `;
             }).join('');
@@ -1785,8 +1799,21 @@
         function viewM(x, el) {
             document.querySelectorAll('.msg-row').forEach(r => r.classList.remove('active'));
             el.classList.add('active');
-            let p = { title: "No Subject", body: "" };
-            try { p = JSON.parse(x.message); } catch (e) { }
+            let p = { title: "No Subject", message: "" };
+            try {
+                let parsed = JSON.parse(x.message);
+                p = { ...p, ...parsed };
+
+                let innerStr = p.message || p.body || p.content || "";
+                if (typeof innerStr === "string" && innerStr.trim().startsWith("{")) {
+                    try {
+                        let innerParsed = JSON.parse(innerStr);
+                        p = { ...p, ...innerParsed };
+                    } catch (e) { }
+                }
+            } catch (e) {
+                p.message = x.message;
+            }
             document.getElementById('msgContentArea').innerHTML = `
                 <div class="msg-view-header">
                     <h2 style="margin:0 0 10px 0; color:#1e293b;">${p.title || "No Subject"}</h2>

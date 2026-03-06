@@ -54,6 +54,24 @@ window.DB = {
         }
     },
 
+    async searchStocks(query, broad = false) {
+        const client = this.getClient();
+        if (!client) return [];
+
+        try {
+            const { data, error } = await client.functions.invoke('search-stocks', {
+                body: { query },
+                headers: { 'x-broad-search': broad ? 'true' : 'false' }
+            });
+
+            if (error) throw error;
+            return data || [];
+        } catch (e) {
+            console.error("Error searching stocks:", e);
+            return [];
+        }
+    },
+
     // --- AUTHENTICATION ---
     async login(identifier, password) {
         const client = this.getClient();
@@ -1160,6 +1178,27 @@ window.DB = {
         return data;
     },
 
+    // Settle outstanding balance for a locked trade
+    async settleTradeBalance(tradeId, amount) {
+        const client = this.getClient();
+        if (!client) return { success: false, message: 'Database client not initialized' };
+
+        const user = this.getCurrentUser();
+        if (!user) return { success: false, message: 'User not logged in' };
+
+        const { data, error } = await client.rpc('settle_trade_balance_atomic', {
+            p_user_id: user.id,
+            p_trade_id: tradeId,
+            p_amount: amount
+        });
+
+        if (error) {
+            console.error("RPC settle_trade_balance_atomic Error:", error);
+            return { success: false, error: error.message || error };
+        }
+        return data;
+    },
+
     // STAGE 2: Admin Approve (Deduct Frozen, Increase Invested, Mark Settled ATOMICALLY)
     async approveSubscriptionAtomic(tradeId, approvedQty, authId, authRole) {
         const client = this.getClient();
@@ -1362,55 +1401,72 @@ window.DB = {
             // 2. Loop through products
             for (const product of products) {
                 try {
-                    const rawSymbol = product.market_symbol || product.symbol || "";
-                    if (!rawSymbol) throw new Error(`Product missing symbol metadata`);
+                    // 1. Resolve strictly to SYMBOL (Fix: Never use ID for price fetching)
+                    let symbol = product.symbol || product.market_symbol || "";
 
-                    let fullSymbol = rawSymbol;
-                    const market = (product.market || "").toLowerCase();
-
-                    // Add market suffix if needed
-                    if (market === 'india' || market === 'nse') {
-                        if (!fullSymbol.endsWith('.NS')) fullSymbol += '.NS';
-                    } else if (market === 'korea' || market === 'kospi') {
-                        if (!fullSymbol.endsWith('.KS')) fullSymbol += '.KS';
+                    // 2. Validate Symbol (Ensure it's not an ID or numeric string)
+                    if (!symbol || typeof symbol !== 'string' || /^\d+$/.test(symbol) || symbol.includes('-')) {
+                        console.error(`Fetching price error: Invalid symbol for ${product.name}:`, symbol);
+                        summary.failed++;
+                        summary.errors.push(`[${product.name}] Invalid symbol: ${symbol}`);
+                        continue;
                     }
 
-                    console.log(`[Batch Update] Fetching price for: ${product.name} | Symbol: ${fullSymbol}`);
+                    // 3. Normalize Symbol (Uppercase + Market Suffixes)
+                    symbol = symbol.trim().toUpperCase();
+                    const market = (product.market || "").toLowerCase();
 
-                    // 3. Call the Edge Function
-                    const res = await this.getMarketPrice(fullSymbol);
+                    if (market === 'india' || market === 'nse') {
+                        if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) symbol += '.NS';
+                    } else if (market === 'bse') {
+                        if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) symbol += '.BO';
+                    } else if (market === 'korea' || market === 'kospi') {
+                        if (!symbol.endsWith('.KS')) symbol += '.KS';
+                    }
+
+                    console.log(`Fetching price: ${product.name} | Symbol: ${symbol}`);
+
+                    // 4. Call the Edge Function
+                    const res = await this.getMarketPrice(symbol);
 
                     if (res && res.status === 'error') {
                         throw new Error(res.message || "Failed to fetch price");
                     }
 
-                    // 4. Extract price
+                    // 5. Extract price
                     const price = res.price || res.regularMarketPrice || res.currentPrice || res.result?.regularMarketPrice;
 
                     if (price === undefined || price === null) {
-                        throw new Error(`Price field missing, response: ${JSON.stringify(res)}`);
+                        throw new Error(`Price field missing for ${symbol}`);
                     }
 
-                    // 5. Update market_cache
+                    // 6. Update market_cache and products table
                     const { error: upsertErr } = await client
                         .from('market_cache')
                         .upsert({
-                            symbol: rawSymbol,
+                            symbol: symbol,
                             price: price,
                             source: 'yahoo',
                             updated_at: new Date().toISOString()
                         }, { onConflict: 'symbol' });
 
                     if (upsertErr) throw upsertErr;
+
+                    // Also update the products table directly for this specific record
+                    await client.from('products').update({
+                        price: price,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', product.id);
+
                     summary.updated++;
 
                 } catch (pErr) {
-                    console.error(`Failed to update ${product.name} (${product.symbol}):`, pErr);
+                    console.error(`Failed to update ${product.name}:`, pErr);
                     summary.failed++;
-                    summary.errors.push(`[${product.symbol || 'Unknown'}] ${pErr.message}`);
+                    summary.errors.push(`[${product.name}] ${pErr.message}`);
                 }
 
-                // 6. Rate-limiting delay (1.5 seconds)
+                // 7. Rate-limiting delay (1.5 seconds)
                 await new Promise(resolve => setTimeout(resolve, 1500));
             }
         } catch (err) {
@@ -1419,6 +1475,48 @@ window.DB = {
         }
 
         return summary;
+    },
+
+    async checkAndSyncPrices() {
+        console.log("🔄 DB: Checking if background price sync is needed...");
+        const client = this.getClient();
+        if (!client) return;
+
+        try {
+            // 1. Get last sync time from platform_settings
+            const lastSyncStr = await this.getPlatformSettings('last_price_sync');
+            const now = new Date();
+            let shouldSync = false;
+
+            if (!lastSyncStr) {
+                console.log("ℹ️ No previous sync record found. Initial sync required.");
+                shouldSync = true;
+            } else {
+                const lastSync = new Date(lastSyncStr);
+                const diffMinutes = (now.getTime() - lastSync.getTime()) / (1000 * 60);
+                console.log(`ℹ️ Last sync was ${diffMinutes.toFixed(1)} minutes ago.`);
+                if (diffMinutes >= 30) {
+                    shouldSync = true;
+                }
+            }
+
+            if (shouldSync) {
+                console.log("🚀 Starting background price sync...");
+                // Note: We don't 'await' this to keep it in the background
+                this.updateAllProductPrices().then(async (result) => {
+                    console.log(`✅ Background sync complete. Updated: ${result.updated}, Failed: ${result.failed}`);
+                    if (result.success && result.updated > 0) {
+                        await this.updatePlatformSettings('last_price_sync', now.toISOString());
+                    }
+                }).catch(err => {
+                    console.error("❌ Background sync error:", err);
+                });
+            } else {
+                console.log("✅ Price sync is still fresh. Skipping.");
+            }
+        } catch (e) {
+            console.error("❌ Error in checkAndSyncPrices:", e);
+        }
     },
 
     // --- PLATFORM SETTINGS ---
