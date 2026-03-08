@@ -3269,7 +3269,7 @@
 
         async function quickActionWithdraw(id, status) {
             showConfirm(`Are you sure you want to ${status} this withdrawal?`, async () => {
-                const note = status === 'Approved' ? 'Approved by Admin' : 'Rejected by Admin';
+                const note = status === 'Approved' ? '' : 'Please contact customer service for details.';
                 await processWithdrawal(id, status, note);
             });
         }
