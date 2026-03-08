@@ -1075,7 +1075,7 @@ window.loadUserAssets = async function (userId) {
     try {
         const { data: dbUser, error } = await client
             .from('users')
-            .select('id, balance, invested, frozen, outstanding, username, full_name, kyc, credit_score, vip, loan_enabled')
+            .select('id, balance, invested, frozen, outstanding, username, full_name, kyc, credit_score, vip, loan_enabled, borrowed_funds')
             .eq('id', userId)
             .single();
 
@@ -1115,7 +1115,7 @@ window.loadUserAssets = async function (userId) {
         if (window.DB && window.DB.getBorrowedFunds) {
             loan = await window.DB.getBorrowedFunds(userId);
         } else {
-            loan = (typeof dbUser.borrowed_funds !== 'undefined') ? (parseFloat(dbUser.borrowed_funds) || 0) : (parseFloat(dbUser.loan) || 0);
+            loan = (typeof dbUser.borrowed_funds !== 'undefined') ? (parseFloat(dbUser.borrowed_funds) || 0) : 0;
         }
 
         // Fetch User Loans List (My Applications) - Live from DB

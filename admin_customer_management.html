@@ -2328,13 +2328,36 @@
                         <button id="btnUpdatePrices"
                             class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2"
                             style="border: none; cursor: pointer; font-weight: 500; display:flex; align-items:center;"
-                            onclick="handlePriceUpdate()">
+                            onclick="handlePriceUpdate()" data-i18n="btn_update_market_prices">
                             🔄 Update Market Prices
                         </button>
                         <button class="vsl-btn-primary" onclick="openAddProductModal()" data-i18n="add_product">+
                             Add
                             Product</button>
+                        <button class="vsl-btn-secondary" onclick="openIpoFetchModal()" style="background:#10b981; color:white; border:none; margin-left:8px;" data-i18n="btn_fetch_ipos">
+                            🚀 Fetch Upcoming IPOs
+                        </button>
                     </div>
+                </div>
+
+                <!-- IPO Fetch Results Modal -->
+                <div id="ipoFetchModal" class="kyc-modal-overlay" style="display:none; z-index:9999;">
+                    <div class="kyc-modal-card" style="height:auto; max-width: 600px;">
+                        <div class="kyc-modal-header" style="justify-content: space-between; padding: 1.25rem 1.5rem;">
+                            <span style="font-weight: 800; font-size: 1.1rem; color: #1e293b;">🚀 Upcoming IPO Finder</span>
+                            <i data-lucide="x" style="cursor:pointer; color:#64748b;"
+                                onclick="document.getElementById('ipoFetchModal').style.display='none'"></i>
+                        </div>
+                        <div class="kyc-modal-body" style="padding: 0; max-height: 450px; overflow-y: auto; background: #f8fafc;">
+                            <div id="ipoFetchList" style="display: flex; flex-direction: column;">
+                                <!-- Items injected here -->
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem; border-top: 1px solid #f1f5f9; text-align: right; background: #f8fafc;">
+                        <button class="vsl-btn-small" style="background:#f1f5f9; color:#475569;"
+                            onclick="document.getElementById('ipoFetchModal').style.display='none'" data-i18n="btn_close">Close</button>
+                    </div>
+                </div>
                 </div>
 
                 <!-- Price Sync Confirm Modal -->
@@ -2424,7 +2447,7 @@
                             <thead>
                                 <tr>
                                     <th data-i18n="product_name">Product Name</th>
-                                    <th>Symbol</th>
+                                    <th data-i18n="th_symbol">Symbol</th>
                                     <th data-i18n="th_shares">Shares (Total/Avail)</th>
                                     <th data-i18n="listing_date">Listing Date</th>
                                     <th data-i18n="status">Status</th>
@@ -2870,6 +2893,7 @@
                             <option value="PENDING" data-i18n="status_pending">PENDING</option>
                             <option value="APPROVED" data-i18n="status_approved">APPROVED</option>
                             <option value="REJECTED" data-i18n="status_rejected">REJECTED</option>
+                            <option value="FULLY_REPAID" data-i18n="status_repaid">FULLY REPAID</option>
                         </select>
                     </div>
                 </div>
@@ -6281,13 +6305,29 @@
 
         // Helper to apply fill rules (can be triggered by search or manual dropdown change)
         function applyProductTypeFillRules(type, data) {
-            if (type === 'Ins.stocks' && data) {
-                console.log("Applying Ins.stocks fill rules.");
-                document.getElementById('p_price').value = data.price || '';
-                document.getElementById('p_sub_price').value = data.price || '';
+            const priceInput = document.getElementById('p_price');
+            const subPriceInput = document.getElementById('p_sub_price');
+            const profitInput = document.getElementById('p_profit');
+            
+            if (type === 'Ins.stocks') {
+                console.log("Applying Ins.stocks market-driven rules.");
+                
+                // Fields are READONLY for Ins.stocks
+                if (priceInput) priceInput.readOnly = true;
+                if (subPriceInput) subPriceInput.readOnly = true;
+                if (profitInput) profitInput.readOnly = true;
 
-                if (data.changePercent !== undefined) {
-                    document.getElementById('p_profit').value = Math.abs(parseFloat(data.changePercent)) || 10;
+                if (data) {
+                    if (priceInput) priceInput.value = data.price || '';
+                    if (subPriceInput) subPriceInput.value = data.price || '';
+                    if (profitInput && data.changePercent !== undefined) {
+                        profitInput.value = Math.abs(parseFloat(data.changePercent)) || 10;
+                    }
+                } else {
+                    // No Yahoo data provided (manual switch?) -> Clear manual entries to enforce market-only
+                    if (priceInput) priceInput.value = '';
+                    if (subPriceInput) subPriceInput.value = '';
+                    if (profitInput) profitInput.value = '';
                 }
 
                 const now = new Date();
@@ -6298,14 +6338,114 @@
                 document.getElementById('p_start').value = formatDT(now);
                 document.getElementById('p_end').value = formatDT(yearLater);
             } else {
-                console.log("Applying IPO/OTC rules (Manual/Clear).");
-                document.getElementById('p_price').value = '';
-                document.getElementById('p_sub_price').value = '';
-                document.getElementById('p_profit').value = '';
-                document.getElementById('p_start').value = '';
-                document.getElementById('p_end').value = '';
+                console.log(`Applying ${type || 'Standard'} rules (Manual Edit Enabled).`);
+                
+                // Fields are EDITABLE for IPO/OTC
+                if (priceInput) priceInput.readOnly = false;
+                if (subPriceInput) subPriceInput.readOnly = false;
+                if (profitInput) profitInput.readOnly = false;
+
+                if (!data) {
+                    if (priceInput) priceInput.value = '';
+                    if (subPriceInput) subPriceInput.value = '';
+                    if (profitInput) profitInput.value = '';
+                    document.getElementById('p_start').value = '';
+                }
             }
         }
+
+        async function openIpoFetchModal() {
+            const modal = document.getElementById('ipoFetchModal');
+            const list = document.getElementById('ipoFetchList');
+            const title = modal?.querySelector('.kyc-modal-header span');
+            if (!modal || !list) return;
+
+            const category = currentProductFilter || 'IPO';
+            const displayCategory = category === 'Ins.stocks' ? 'Institutional' : category;
+            
+            const titleKey = window.i18n('title_turbo_finder', 'Turbo Finder');
+            if (title) title.innerText = `🚀 ${displayCategory} ${titleKey}`;
+            list.innerHTML = `<div style="padding:2rem; text-align:center; color:#64748b;" data-i18n="lbl_loading">${window.i18n('lbl_loading', 'Loading...')}</div>`;
+            modal.style.display = 'flex';
+
+            try {
+                const results = await window.DB.getTurboMarketData(category);
+                if (results && results.length > 0) {
+                    window._lastTurboResults = results; // Store globally for easy access
+                    list.innerHTML = results.map((item, index) => {
+                        const symbolDisplay = item.exchange === 'NSE' ? `${item.symbol}.NS` : 
+                                            item.exchange === 'BSE' ? `${item.symbol}.BO` : 
+                                            item.symbol;
+                        
+                        return `
+                        <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: white; transition: 0.2s;" class="ipo-fetch-row">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 800; color: #1e293b; font-size: 1rem; margin-bottom: 0.25rem;">${item.name}</div>
+                                <div style="display: flex; gap: 10px; font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                                    <span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${symbolDisplay}</span>
+                                    ${item.listing_date ? `<span>Listing: ${item.listing_date}</span>` : `<span>Sector: ${item.exchange}</span>`}
+                                </div>
+                            </div>
+                            <div style="text-align: right; margin-right: 1.5rem;">
+                                <div style="font-weight: 800; color: #10b981; font-size: 1.1rem;">₹${item.price.toLocaleString()}</div>
+                                <div style="font-size: 0.7rem; color: #94a3b8;">Est. Profit: ${item.est_profit}%</div>
+                            </div>
+                            <button onclick="autoFillIPOByIndex(${index})" 
+                                style="background: #1e56a0; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: 0.2s;" data-i18n="btn_autofill">
+                                ${window.i18n('btn_autofill', 'AUTO-FILL')}
+                            </button>
+                        </div>
+                    `}).join('');
+                } else {
+                    list.innerHTML = '<div style="padding:2rem; text-align:center; color:#64748b;">No products found for this category.</div>';
+                }
+            } catch (e) {
+                console.error("Turbo Fetch Error:", e);
+                list.innerHTML = '<div style="padding:2rem; text-align:center; color:#ef4444;">Failed to fetch data. Please try again.</div>';
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.autoFillIPOByIndex = function(index) {
+            if (window._lastTurboResults && window._lastTurboResults[index]) {
+                window.autoFillIPO(window._lastTurboResults[index]);
+            }
+        };
+
+        window.autoFillIPO = function(data) {
+            console.log("Auto-filling Product data:", data);
+            
+            // Close selection modal
+            document.getElementById('ipoFetchModal').style.display = 'none';
+            
+            // Open Add Product modal
+            openAddProductModal();
+            
+            // Standardize Symbol
+            let fullSymbol = data.symbol;
+            if (data.exchange === 'BSE' && !fullSymbol.endsWith('.BO')) fullSymbol += '.BO';
+            if (data.exchange === 'NSE' && !fullSymbol.endsWith('.NS')) fullSymbol += '.NS';
+            
+            // Fill Fields
+            document.getElementById('p_name').value = data.name;
+            document.getElementById('p_market_symbol').value = fullSymbol;
+            document.getElementById('p_price').value = data.price;
+            document.getElementById('p_sub_price').value = data.price;
+            document.getElementById('p_product_type').value = currentProductFilter;
+            document.getElementById('p_exchange').value = data.exchange || 'NSE';
+            document.getElementById('p_listing').value = data.listing_date || '';
+            document.getElementById('p_start').value = data.start_date || '';
+            document.getElementById('p_end').value = data.end_date || '';
+            document.getElementById('p_profit').value = data.est_profit || '';
+            document.getElementById('p_desc').value = data.description || '';
+            
+            // Trigger UI logic for product type
+            applyProductTypeFillRules(currentProductFilter, data);
+
+            // Visual feedback
+            const successTitle = window.i18n('lbl_turbo_autofill', 'Turbo Auto-Fill');
+            showAlert('success', `${data.name} details have been auto-filled!`, successTitle);
+        };
 
         function openAddProductModal() {
             console.log("Opening Add Product Modal...");
@@ -6382,6 +6522,9 @@
             }
 
             document.getElementById('addProductModal').style.display = 'flex';
+            
+            // Apply rules for the loaded product type
+            applyProductTypeFillRules(p.product_type);
         }
 
         function closeProductModal() {
@@ -6465,9 +6608,17 @@
             const ipoBtn = document.getElementById('btn_product_ipo');
             const otcBtn = document.getElementById('btn_product_otc');
             const insBtn = document.getElementById('btn_product_ins');
+            const turboBtn = document.querySelector('button[onclick="openIpoFetchModal()"]');
+
             if (ipoBtn) ipoBtn.classList.toggle('active', type === 'IPO');
             if (otcBtn) otcBtn.classList.toggle('active', type === 'OTC');
             if (insBtn) insBtn.classList.toggle('active', type === 'Ins.stocks');
+            
+            if (turboBtn) {
+                const label = type === 'Ins.stocks' ? 'Institutional' : type;
+                turboBtn.innerHTML = `🚀 Fetch ${label} Turbo`;
+            }
+
             renderProducts();
         };
 

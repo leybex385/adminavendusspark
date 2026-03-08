@@ -59,7 +59,7 @@ if (window.DB) {
             .from('loans')
             .select('amount')
             .eq('user_id', userId)
-            .eq('status', 'APPROVED');
+            .in('status', ['Approved', 'APPROVED']);
 
         if (error) {
             console.error("Error fetching borrowed funds:", error);
