@@ -43,8 +43,31 @@ window.openCloseOrderModal = function (tradeOrId) {
 
     const updateSellingData = () => {
         const me = window.MarketEngine || {};
-        const livePriceData = me.getProduct ? me.getProduct(trade.symbol) : null;
-        const currentPrice = livePriceData ? livePriceData.price : trade.price;
+
+        // --- OTC PRICE FETCHING LOGIC ---
+        let currentPrice = trade.price;
+        const isOTC = trade.type?.trim().toLowerCase() === 'otc';
+
+        if (isOTC && trade.products?.market_symbol) {
+            // Priority: Live cache from Yahoo
+            if (me.livePrices && me.livePrices[trade.products.market_symbol]) {
+                currentPrice = me.livePrices[trade.products.market_symbol];
+            } else if (me.getProduct) {
+                // Fallback: Engine product price
+                const p = me.getProduct(trade.products.market_symbol) || me.getProduct(trade.symbol);
+                if (p) currentPrice = p.price;
+            }
+
+            // Trigger background fetch if missing
+            if (me.fetchMarketPrice && (!me.livePrices || !me.livePrices[trade.products.market_symbol])) {
+                me.fetchMarketPrice(trade.products.market_symbol);
+            }
+        } else {
+            // Standard Stock / IPO logic
+            const livePriceData = me.getProduct ? me.getProduct(trade.symbol) : null;
+            currentPrice = livePriceData ? livePriceData.price : trade.price;
+        }
+
         const totalOrderValue = parseFloat(trade.total_amount);
         const currentSaleValue = currentPrice * trade.quantity;
 
@@ -161,7 +184,7 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
 
     try {
         // 1. Fetch the latest trade data to ensure it hasn't been sold already
-        const { data: trade, error: fetchErr } = await client.from('trades').select('*').eq('id', tradeId).single();
+        const { data: trade, error: fetchErr } = await client.from('trades').select('*, products(*)').eq('id', tradeId).single();
         if (fetchErr || !trade) throw new Error("Could not find the original trade record.");
         if (trade.status === 'Sold') throw new Error("This position is already closed.");
 
@@ -192,8 +215,16 @@ window.handleSellTrade = async function (tradeId, sellPrice, netReturn) {
 
         // 2. Re-fetch real-time price
         const me = window.MarketEngine || {};
-        const livePriceData = me.getProduct ? me.getProduct(trade.symbol) : null;
-        const finalSellPrice = livePriceData ? livePriceData.price : sellPrice;
+        let finalSellPrice = sellPrice;
+        const isOTC = trade.type?.trim().toLowerCase() === 'otc';
+
+        if (isOTC && trade.products?.market_symbol) {
+            const live = me.livePrices ? me.livePrices[trade.products.market_symbol] : null;
+            if (live) finalSellPrice = live;
+        } else {
+            const livePriceData = me.getProduct ? me.getProduct(trade.symbol) : null;
+            if (livePriceData) finalSellPrice = livePriceData.price;
+        }
 
         // Calculations
         const qty = parseFloat(trade.quantity || 0);
@@ -308,9 +339,20 @@ document.addEventListener("click", function (e) {
     const subBtn = e.target.closest(".subscribe-btn");
     if (subBtn) {
         const productId = subBtn.dataset.id;
-        console.log("Subscribe Clicked:", productId);
+        const pName = subBtn.dataset.name;
+        const pPrice = parseFloat(subBtn.dataset.price);
+        const pYield = parseFloat(subBtn.dataset.yield);
+        const pType = subBtn.dataset.type;
+
+        console.log("Subscribe Clicked:", productId, pName, pType);
+
         if (typeof window.openOTCSubscribeModal === "function") {
-            window.openOTCSubscribeModal(productId);
+            window.openOTCSubscribeModal(productId, {
+                name: pName,
+                price: pPrice,
+                yield: pYield,
+                type: pType
+            });
         } else {
             console.error("openOTCSubscribeModal is not defined");
         }
@@ -352,10 +394,19 @@ window.openOTCSubscribeModal = function (productId) {
         return;
     }
 
-    const product = me.getProduct(productId);
+    const product = me.getProduct(productId) || (extraData ? { id: productId, ...extraData } : null);
     if (!product) {
         console.error("Product not found:", productId);
         return;
+    }
+
+    // NEW: Handle IPO directly if on discover page to prevent redirection
+    const pType = (product.type || 'stock').trim().toUpperCase();
+    if (pType === 'IPO') {
+        if (typeof window.openIpoConfirmation === "function") {
+            window.openIpoConfirmation(product);
+            return;
+        }
     }
 
     if (typeof window.openStockDetail === "function") {

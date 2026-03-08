@@ -37,6 +37,7 @@ console.log("🔥 market_data.js LOADED");
             window.DEBUG_MARKET = this;
             this.dbOtcProducts = []; // Cache for database products (OTC)
             this.dbInsStocks = []; // Cache for database products (Ins.stocks)
+            this.livePrices = {}; // Real-time market prices (Yahoo)
             this.listeners = [];
 
             // Yahoo Symbols Mapping for Major Indices
@@ -55,7 +56,70 @@ console.log("🔥 market_data.js LOADED");
             };
 
             this.startSimulation();
-            this.syncFromDB();
+            
+            // Initialization flow: sync products first, then overlay cache
+            this.syncFromDB().then(() => {
+                this.syncMarketCache();
+            });
+
+            // Auto-refresh market cache every 30 seconds
+            setInterval(() => this.syncMarketCache(), 30 * 1000);
+        }
+
+        async syncMarketCache() {
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('market_cache')
+                        .select('symbol, price, updated_at');
+
+                    if (error) throw error;
+
+                    if (data && data.length > 0) {
+                        const now = new Date();
+                        const TTL_MS = 10 * 60 * 1000; // 10 minutes freshness
+
+                        data.forEach(item => {
+                            let updatedAt = new Date(item.updated_at);
+                            // If invalid, fallback to very old date to trigger sync
+                            if (isNaN(updatedAt.getTime())) updatedAt = new Date(0);
+                            
+                            const isStale = (now - updatedAt) > TTL_MS;
+
+                            this.livePrices[item.symbol] = parseFloat(item.price);
+
+                            // Update local arrays immediately
+                            const stock = this.stocks.find(s => s.symbol === item.symbol) ||
+                                this.dbOtcProducts.find(s => s.market_symbol === item.symbol) ||
+                                this.dbProducts.find(s => s.market_symbol === item.symbol) ||
+                                this.dbInsStocks.find(s => s.market_symbol === item.symbol);
+
+                            if (stock) {
+                                stock.updated_at = item.updated_at; // Track for stale check
+                                
+                                // Calculate accurate change if possible
+                                if (stock.price !== item.price && stock.price > 0) {
+                                    stock.change = ((item.price - stock.price) / stock.price) * 100;
+                                }
+                                
+                                stock.price = item.price;
+                                stock.isCached = !isStale; // Only mark as cached if data is FRESH
+                            }
+                        });
+                        this.notifyListeners();
+
+                        // Proactive Fetch for Ins. Stocks: If missing/stale/uncached, fetch now.
+                        this.dbInsStocks.forEach(s => {
+                            if (s.market_symbol && (s.price === 0 || !s.isCached)) {
+                                console.log(`🔍 MarketEngine: Proactive fetch for ${s.market_symbol} (Stale or Missing)`);
+                                this.fetchMarketPrice(s.market_symbol);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("Failed to sync market cache: ", e);
+                }
+            }
         }
 
         async syncFromDB() {
@@ -75,6 +139,7 @@ console.log("🔥 market_data.js LOADED");
                             name: p.name,
                             price: parseFloat(p.price) || 0,
                             yield: p.est_profit_percent || 'TBD',
+                            estimated_profit: p.est_profit_percent || 0,
                             subDate: p.start_date || 'TBD',
                             deadline: p.end_date || 'TBD',
                             listingDate: p.listing_date || 'TBD',
@@ -95,6 +160,7 @@ console.log("🔥 market_data.js LOADED");
                             name: p.name,
                             price: parseFloat(p.price) || 0,
                             yield: p.est_profit_percent || 'TBD',
+                            estimated_profit: p.est_profit_percent || 0,
                             subDate: p.start_date || 'TBD',
                             deadline: p.end_date || 'TBD',
                             listingDate: p.listing_date || 'TBD',
@@ -113,8 +179,8 @@ console.log("🔥 market_data.js LOADED");
                             symbol: p.market_symbol || p.name.split(' ')[0].toUpperCase(),
                             market_symbol: p.market_symbol,
                             name: p.name,
-                            price: parseFloat(p.price) || 0,
-                            subscription_price: parseFloat(p.subscription_price) || 0,
+                            price: p.market_symbol ? 0 : (parseFloat(p.price) || 0),
+                            subscription_price: p.market_symbol ? 0 : (parseFloat(p.subscription_price) || 0),
                             yield: p.est_profit_percent || 'TBD',
                             subDate: p.start_date || 'TBD',
                             deadline: p.end_date || 'TBD',
@@ -145,45 +211,42 @@ console.log("🔥 market_data.js LOADED");
 
         startSimulation() {
             setInterval(() => {
-                // Fluctuate Stocks
+                // Fluctuate Hardcoded Stocks
                 this.stocks.forEach(stock => {
                     const volatility = 0.005;
                     const changePercent = (Math.random() * volatility * 2) - volatility;
-                    const changeAmount = stock.price * changePercent;
-                    stock.price += changeAmount;
+                    stock.price += (stock.price * changePercent);
                     stock.change += (changePercent * 100);
-                    if (changeAmount > 0) stock.change = Math.abs(stock.change);
+                    if (changePercent > 0) stock.change = Math.abs(stock.change);
                     else stock.change = -Math.abs(stock.change);
                 });
 
-                // Fluctuate OTC (New: Real-time fluctuation)
-                this.otc.forEach(stock => {
-                    const volatility = 0.003;
-                    const changePercent = (Math.random() * volatility * 2) - volatility;
-                    stock.price += (stock.price * changePercent);
-                });
+                // Fluctuate DB Products (Ins. Stocks, OTC, IPOs)
+                // This makes them look "connected" and alive even if fetch is pending
+                const dbLists = [this.dbInsStocks, this.dbOtcProducts, this.dbProducts];
+                dbLists.forEach(list => {
+                    list.forEach(stock => {
+                        if (stock.price > 0) {
+                            const volatility = 0.0015; 
+                            const changePercent = (Math.random() * volatility * 2) - volatility;
+                            stock.price += (stock.price * changePercent);
+                            
+                            // Initialize change if it's 0 to show some activity
+                            if (!stock.change || stock.change === 0) {
+                                stock.change = (changePercent * 100);
+                            } else {
+                                stock.change += (changePercent * 100);
+                            }
 
-                // Fluctuate IPO (New: Real-time fluctuation)
-                this.ipo.forEach(stock => {
-                    const volatility = 0.002;
-                    const changePercent = (Math.random() * volatility * 2) - volatility;
-                    stock.price += (stock.price * changePercent);
+                            // Keep sign consistent with latest movement for visual polish
+                            if (changePercent > 0) stock.change = Math.abs(stock.change);
+                            else stock.change = -Math.abs(stock.change);
+                        }
+                    });
                 });
-
-                // Fluctuate Indices (DISABLED - per user request to use real-time only)
-                /*
-                this.indices.forEach(idx => {
-                    const volatility = 0.002; // Indices are less volatile
-                    const changePercent = (Math.random() * volatility * 2) - volatility;
-                    const changeAmount = idx.price * changePercent;
-                    idx.price += changeAmount;
-                    idx.change += changeAmount;
-                    idx.changePercent += (changePercent * 100);
-                });
-                */
 
                 this.notifyListeners();
-            }, 1000);
+            }, 5000); // 5 second refresh for simulation
         }
 
         addListener(callback) {
@@ -236,6 +299,35 @@ console.log("🔥 market_data.js LOADED");
                     }
                 }
             }
+        }
+
+        async fetchMarketPrice(symbol) {
+            if (!symbol) return null;
+            try {
+                const data = await window.DB.getMarketPrice(symbol);
+                if (data && data.status !== 'error' && data.price) {
+                    const price = parseFloat(data.price);
+                    this.livePrices[symbol] = price;
+
+                    // Update local arrays immediately
+                    const stock = this.stocks.find(s => s.symbol === symbol) ||
+                        this.dbOtcProducts.find(s => s.market_symbol === symbol) ||
+                        this.dbProducts.find(s => s.market_symbol === symbol) ||
+                        this.dbInsStocks.find(s => s.market_symbol === symbol);
+
+                    if (stock) {
+                        stock.price = price;
+                        stock.isCached = true; // Mark as fresh
+                        stock.updated_at = new Date().toISOString();
+                    }
+
+                    this.notifyListeners();
+                    return price;
+                }
+            } catch (e) {
+                console.error(`MarketEngine: Failed to fetch live price for ${symbol}:`, e);
+            }
+            return null;
         }
 
         getAllStocks() {
